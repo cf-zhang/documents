@@ -107,64 +107,64 @@ roslaunch beginner_tutorials launch_file.launch a:=1 b:=5
 	<param name="foo" value="bar" unless="$(arg foo)" />  <!-- This param won't be set when "unless" condition is met -->
 ```
 
-##标签
+## 标签
 
-###<launch>
+### <launch>
 是一个launch文件的根元素，作为其他角色的容器存在。
 该容器内可以包含如下成员：
 <node> 启动一个节点；<param> 设置参数服务器上参数；<remap> 生命重新映射一个名字；<machine> 声明一个用于launch的机器；
 <rosparam>通过rosparam文件来设置ros参数；<include> 包含一个其他的roslaunch文件；<env> 指定节点的环境变量；<test> 启动一个test节点；
 <arg> 声明一个参数；<group> 组内作为一个命名空间，或者统一进行重映设；
 
-###<node>
+### <node>
 指定一个节点用于启动
 
-####属性
-#####pkg="mypackage"
+#### 属性
+##### pkg="mypackage"
 节点所在的包
 
-#####type="nodetype"
+##### type="nodetype"
 节点对应的可执行文件名
 
-#####name="nodename"
+##### name="nodename"
 节点名，不可以包括命名空间，必须使用 ns属性来设置命名空间
 
-#####args="arg1 arg2 arg3"(可选)
+##### args="arg1 arg2 arg3"(可选)
 节点参数
 
-#####machine="machine-name"(optional, see <machine>)
+##### machine="machine-name"(optional, see <machine>)
 在指定的机器上运行该节点
 
-#####respawn="true"(optional, default: False)
+##### respawn="true"(optional, default: False)
 当节点挂掉的时候自动重启该节点
 
-#####respawn_delay="30" (optional, default 0) New in ROS indigo
+##### respawn_delay="30" (optional, default 0) New in ROS indigo
 如果自动启动生效，那么当节点挂掉之后等待respawn_delay秒再尝试重新启动
 
-#####required="true"(optional)
+##### required="true"(optional)
 如果该节点不存在，那么整个roslaunch的启动都将被取消
 
-#####ns="foo"(optional)
+##### ns="foo"(optional)
 设置节点的命名空间
 
-#####clear_params="true|false"(optional)
+##### clear_params="true|false"(optional)
 在启动该节点之前，从该节点的私有命名空间里面清空已有的参数
 
-#####output="log|screen"(optional)
+##### output="log|screen"(optional)
 该节点的日志文件打印位置，log为日志文件，screen为屏幕， stderr为屏幕
     
-#####cwd="ROS_HOME|node"(optional)
+##### cwd="ROS_HOME|node"(optional)
 节点运行的工作空间，如果为ROS_HOME那么为整个ros的工作空间，如果为node，那么为该节点所在文件系统的位置。
 
-#####launch-prefix="prefix arguments"(optional)
+##### launch-prefix="prefix arguments"(optional)
 启动该节点的前置，来生命启动方式： gdb, valgrind, xterm, nice, or other handy tools. 
 
-####成员
+#### 成员
 
 <env> 为该节点设置一个环境变量；<remap> 为该节点的参数设置重映设；
 <rosparam> 加载一个参数文件到该节点的本地命名空间中；<param> 在该节点的本地空间中设置一个参数
 
-###<machine>
+### <machine>
 如果只在本地机器上运行节点不需要设置该标签，它主要是用来设置远程主机的ssh和ros环境变量的，当然也可以设置本机的ros环境变量。
 具体详细情况可以查看wiki：[machine](http://wiki.ros.org/roslaunch/XML/machine)
 
@@ -384,6 +384,18 @@ Args不是全局性的。 arg声明特定于单个启动文件，非常类似于
 ## 实例
 
 
+
+# 实际应用中的一些技巧
+## 顶层launch文件设计提示：
+1.顶级启动文件应该很短，并且包含与应用程序子组件对应的其他文件的包含，以及通常更改的ROS参数。
+2.在决定应用程序需要多少顶级启动文件时，请注意权衡。
+3.使用env substitution参数允许启动文件的某些部分依赖于环境变量
+4.使用机器标签来平衡负载并控制在同一台机器上运行的节点，并考虑使机器文件名依赖于环境变量以获得可重用性。
+5.在不同情况下针对不同主题发布给定类型的信息时，请使用主题重新映射。
+6.Yaml文件允许具有复杂类型的参数，参数的嵌套命名空间以及在多个位置重用相同的参数值。
+7.要修改应用程序的“顶级”方面，请复制顶级启动文件并更改所需的部分。
+8.要修改无法更改的启动文件树中的深层嵌套参数，请使用roslaunch的参数覆盖语义。
+9.如果您可以修改原始启动文件，通常最好使用roslaunch参数而不是参数覆盖或复制roslaunch文件。
 
 
 
