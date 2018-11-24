@@ -1,5 +1,5 @@
-# 灵动科技(Forwardx)编码规范(C++)
-本文档对灵动科技C++开发编码进行约束，加强代码一致性，使得代码易于阅读、理解以及修改，从而使得代码易于管理(依据[Google 开源项目风格指南](https://zh-google-styleguide.readthedocs.io/en/latest/google-cpp-styleguide/))。文档仅对编码规范进行要求，未详细说明原因。若需详细了解，请参考链接[Google 开源项目风格指南](https://zh-google-styleguide.readthedocs.io/en/latest/google-cpp-styleguide/)
+# 编码规范(C++)
+本文档对C++开发编码进行约束，加强代码一致性，使得代码易于阅读、理解以及修改，从而使得代码易于管理(依据[Google 开源项目风格指南](https://zh-google-styleguide.readthedocs.io/en/latest/google-cpp-styleguide/))。文档仅对编码规范进行要求，未详细说明原因。若需详细了解，请参考链接[Google 开源项目风格指南](https://zh-google-styleguide.readthedocs.io/en/latest/google-cpp-styleguide/)
 
 本编码规范的编写原则：对自己提供的代码负责、为他人着想、美观。  
 
