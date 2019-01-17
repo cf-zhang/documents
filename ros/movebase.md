@@ -45,5 +45,5 @@
 
 ## MoveBase类资源结构
 
- ![MoveBase资源](/home/ld/native/navigation/move_base/image/resource.png)
+ ![MoveBase资源](https://raw.githubusercontent.com/cf-zhang/documents/master/ros/image/resource.png)
 
