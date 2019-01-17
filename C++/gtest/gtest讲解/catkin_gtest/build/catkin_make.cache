@@ -1,0 +1,2 @@
+ros_gtest
+-DCATKIN_DEVEL_PREFIX=/home/cfzhang/xcode/catkin_gtest/devel -DCMAKE_INSTALL_PREFIX=/home/cfzhang/xcode/catkin_gtest/install -G Unix Makefiles

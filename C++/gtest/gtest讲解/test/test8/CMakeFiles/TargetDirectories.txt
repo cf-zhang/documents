@@ -1,0 +1,3 @@
+/home/cfzhang/test/test8/CMakeFiles/edit_cache.dir
+/home/cfzhang/test/test8/CMakeFiles/rebuild_cache.dir
+/home/cfzhang/test/test8/CMakeFiles/simple_test.dir

@@ -1,0 +1,8 @@
+prefix=/home/cfzhang/xcode/catkin_gtest/devel
+
+Name: ros_gtest
+Description: Description of ros_gtest
+Version: 0.0.0
+Cflags: -I/home/cfzhang/xcode/catkin_gtest/devel/include
+Libs: -L/home/cfzhang/xcode/catkin_gtest/devel/lib 
+Requires: message_runtime

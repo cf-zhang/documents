@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/cfzhang/xcode/catkin_gtest/devel/setup.sh
