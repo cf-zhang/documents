@@ -158,12 +158,3 @@ git rebase -i HEAD～3
 
 还需要reset，多次编辑提交以后，利用 git rebase  --continue来生效
 
-
-
-
-
-*
-
-
-
-
