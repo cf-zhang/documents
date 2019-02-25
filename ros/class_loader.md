@@ -238,7 +238,22 @@ class_loader的核心是在命名空间pulgins::plugins_private中的一组全�
 
 导出列表由编译器在创建共享库的时候自动生成，也可以由开发人员手工编写。导出列表的原理是显式地告诉编译器可以通过外部文件从对象文件导出的符号是哪些。GNU用户将此类外部文件称作为”导出映射”。
 
-## exection.hpp
+## exections.hpp && class_loader_exections.h
 
-![class_loader exection 类图](http://www.plantuml.com/plantuml/png/SoWkIImgAStDuGh9BCb9LL1ApaaiBexFoKzCIIrISAr8JIueoSpFUxvnzzFP-vIumB8AnIKfLbP5fNabcRcfyQb5HVb5K0bd4Ea3rkjQaPmArWgLyibCAaeigWH9uf0ApSl18kbSb9fOaWes65tABn_5lipY4YGbc6vKiAdHrSNkH6o2OEMOpYQi7E4LmXfGl4TOENulEwJcfG1Z4W00)
+![class_loader exection 类图](umlresource/exception.png )
 
+## meta_object.hpp && meta_object.cpp && meta_object.h
+
+![class_loader exection 类图](umlresource/meta_object.png )
+
+ AbstractMetaObjectBase: 排除多态类型参数的元对象的基类。但是，子类是类模板。
+ 
+ AbstractMetaObject: 用于工厂的简短抽象基类，其中多态类型变量指示插件接口的基类。 
+ 
+ MetaObject: 实际的工厂
+ 
+ 
+ 
+ 
+ 
+ 
