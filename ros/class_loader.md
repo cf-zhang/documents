@@ -346,7 +346,7 @@ CLASS_LOADER_REGISTER_CLASS_INTERNAL_WITH_MESSAGE(Circle, Shape, 0, "")
 
 可以绑定多个运行时库的类加载器
 
-！[](umlresource/multi_class_loader.png)
+![](umlresource/multi_class_loader.png)
 
 
 
