@@ -252,8 +252,106 @@ class_loader的核心是在命名空间pulgins::plugins_private中的一组全�
  
  MetaObject: 实际的工厂
  
- 
- 
+## class_loader_core.h && class_loader_core.hpp && class_loader_core.cpp
+
+是class_loader的内部实现，列举了N多个方法
+
+![class_loader exection 类图](umlresource/class_loader_core.png )
+
+引入了"Poco/SharedLibrary.h"的方法来加载动态库
+
+## class_loader_register_macro.h && register_macro.hpp
+
+使用宏函数的形式进行多层封装，将基类与派生类组合成结构体内容，并定义出一个该结构体的静态变量
+
+对于要作为插件导出的每个类，必须在源（.cpp）文件中声明CLASS_LOADER_REGISTER_CLASS。宏使用了一种技巧，即生成一个新的结构，并在其后面声明一个相同类型的静态全局变量。
+结构的构造函数使用插件系统调用注册函数。当插件系统加载包含注册类的库时，静态变量的初始化强制调用结构构造函数，所有导出的类都会自动注册。
+
+以一个基类(Shape)与派生类(Circle)来将宏体进行展开如下
+
+CLASS_LOADER_REGISTER_CLASS(Circle, Shape)
+
+```
+#define CLASS_LOADER_REGISTER_CLASS(Derived, Base) \
+  CLASS_LOADER_REGISTER_CLASS_WITH_MESSAGE(Derived, Base, "")
+```
+
+CLASS_LOADER_REGISTER_CLASS_WITH_MESSAGE(Circle, Shape, "")
+
+```
+#define CLASS_LOADER_REGISTER_CLASS_WITH_MESSAGE(Derived, Base, Message) \
+  CLASS_LOADER_REGISTER_CLASS_INTERNAL_HOP1_WITH_MESSAGE(Derived, Base, __COUNTER__, Message)
+```
+
+CLASS_LOADER_REGISTER_CLASS_INTERNAL_HOP1_WITH_MESSAGE(Circle, Shape, __COUNTER__, Message)
+
+__COUNTER__是一个预定义的宏，这个值在编译过程中将从0开始计数，每次被调用时加1。因为唯一性，所以很多时候被用来构造独立的变量名称。
+
+```
+#define CLASS_LOADER_REGISTER_CLASS_INTERNAL_HOP1_WITH_MESSAGE(Derived, Base, UniqueID, Message) \
+  CLASS_LOADER_REGISTER_CLASS_INTERNAL_WITH_MESSAGE(Derived, Base, UniqueID, Message)
+```
+
+CLASS_LOADER_REGISTER_CLASS_INTERNAL_WITH_MESSAGE(Circle, Shape, 0, "")
+
+```
+#define CLASS_LOADER_REGISTER_CLASS_INTERNAL_WITH_MESSAGE(Derived, Base, UniqueID, Message) \
+  namespace \
+  { \
+  struct ProxyExec ## UniqueID \
+  { \
+    typedef  Derived _derived; \
+    typedef  Base _base; \
+    ProxyExec ## UniqueID() \
+    { \
+      if (!std::string(Message).empty()) { \
+        CONSOLE_BRIDGE_logInform("%s", Message);} \
+      class_loader::impl::registerPlugin<_derived, _base>(#Derived, #Base); \
+    } \
+  }; \
+  static ProxyExec ## UniqueID g_register_plugin_ ## UniqueID; \
+  }  // namespace
+
+```
+
+```
+  namespace 
+  { 
+  struct ProxyExec0
+  { 
+    typedef  Circle _derived; 
+    typedef  Shape _base; 
+    ProxyExec0() 
+    { 
+      if (!std::string("").empty()) { 
+        CONSOLE_BRIDGE_logInform("%s", "");
+       }
+      class_loader::impl::registerPlugin<_derived, _base>(“Circle”, “Shape”); 
+    }
+  };
+  static ProxyExec0 g_register_plugin_0;
+  }  // namespace
+
+```
+
+可以看到宏函数展开以后，生成了一个结构体ProxyExec0，并定义了一个全局静态变量g_register_plugin_0，在程序启动时会运行结构体的构造函数，在构造函数里进行插件的注册
+
+## class_loader.h && class_loader.hpp && class_loader.cpp
+
+此类允许加载和卸载动态链接的库，这些库包含类定义，从中可以在运行时创建/销毁对象（即class_loader）。class_loader加载的库只能在该类加载器对象的范围内访问。
+
+![](umlresource/class_loader.png)
+
+## multi_library_class_loader.h && multi_library_class_loader.hpp && multi_library_class_loader.cpp
+
+可以绑定多个运行时库的类加载器
+
+！[](umlresource/multi_class_loader.png)
+
+
+
+
+
  
  
  

@@ -1,0 +1,36 @@
+@startuml
+namespace class_loader #DDDDDD {
+note top of MultiLibraryClassLoader : typedef std::string LibraryPath;\
+                                     \ntypedef std::map<LibraryPath, class_loader::ClassLoader *> LibraryToClassLoaderMap;\
+                                     \ntypedef std::vector<ClassLoader *> ClassLoaderVector;
+class MultiLibraryClassLoader {
+-- public method --
++explicit MultiLibraryClassLoader(bool enable_ondemand_loadunload);
++virtual ~MultiLibraryClassLoader();
++template<class Base> std::shared_ptr<Base> createSharedInstance(const std::string & class_name)
++template<class Base> std::shared_ptr<Base> createSharedInstance(const std::string & class_name, const std::string & library_path)
++template<class Base> boost::shared_ptr<Base> createInstance(const std::string & class_name)
++template<class Base> boost::shared_ptr<Base> createInstance(const std::string & class_name, const std::string & library_path)
++template<class Base> ClassLoader::UniquePtr<Base> createUniqueInstance(const std::string & class_name)
++template<class Base> ClassLoader::UniquePtr<Base> createUniqueInstance(const std::string & class_name, const std::string & library_path)
++template<class Base> Base * createUnmanagedInstance(const std::string & class_name)
++template<class Base> Base * createUnmanagedInstance(const std::string & class_name, const std::string & library_path)
++template<class Base> bool isClassAvailable(const std::string & class_name)
++bool isLibraryAvailable(const std::string & library_path);
++template<class Base> std::vector<std::string> getAvailableClasses()
++template<class Base> std::vector<std::string> getAvailableClassesForLibrary(const std::string & library_path)
++std::vector<std::string> getRegisteredLibraries();
++void loadLibrary(const std::string & library_path);
++int unloadLibrary(const std::string & library_path);
+-- private method --
+-bool isOnDemandLoadUnloadEnabled()
+-ClassLoader * getClassLoaderForLibrary(const std::string & library_path);
+-template<typename Base> ClassLoader * getClassLoaderForClass(const std::string & class_name)
+-ClassLoaderVector getAllAvailableClassLoaders();
+-void shutdownAllClassLoaders();
+-- private data --
+-bool enable_ondemand_loadunload_;
+-LibraryToClassLoaderMap active_class_loaders_;
+-boost::mutex loader_mutex_;
+}
+@enduml

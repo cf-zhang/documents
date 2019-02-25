@@ -1,0 +1,41 @@
+@startuml
+
+namespace class_loader.impl #DDDDDD {
+note "typedef std::string LibraryPath; \
+      \ntypedef std::string ClassName; \
+      \ntypedef std::string BaseClassName; \
+      \ntypedef std::map<ClassName, impl::AbstractMetaObjectBase *> FactoryMap; \
+      \ntypedef std::map<BaseClassName, FactoryMap> BaseToFactoryMapMap; \
+      \ntypedef std::pair<LibraryPath, Poco::SharedLibrary *> LibraryPair; \
+      \ntypedef std::vector<LibraryPair> LibraryVector; \
+      \ntypedef std::vector<AbstractMetaObjectBase *> MetaObjectVector;" as N1
+
+class GlobalMethod{
+-- default --
+void printDebugInfoToScreen();
+BaseToFactoryMapMap & getGlobalPluginBaseToFactoryMapMap();
+LibraryVector & getLoadedLibraryVector();
+std::string getCurrentlyLoadingLibraryName();
+void setCurrentlyLoadingLibraryName(const std::string & library_name);
+ClassLoader * getCurrentlyActiveClassLoader();
+void setCurrentlyActiveClassLoader(ClassLoader * loader);
+FactoryMap & getFactoryMapForBaseClass(const std::string & typeid_base_class_name);
+template<typename Base> FactoryMap & getFactoryMapForBaseClass()
+boost::recursive_mutex & getLoadedLibraryVectorMutex();
+boost::recursive_mutex & getPluginBaseToFactoryMapMapMutex();
+bool hasANonPurePluginLibraryBeenOpened();
+void hasANonPurePluginLibraryBeenOpened(bool hasIt);
+std::vector<std::string> getAllLibrariesUsedByClassLoader(const ClassLoader * loader);
+bool isLibraryLoaded(const std::string & library_path, ClassLoader * loader);
+bool isLibraryLoadedByAnybody(const std::string & library_path);
+void loadLibrary(const std::string & library_path, ClassLoader * loader);
+void unloadLibrary(const std::string & library_path, ClassLoader * loader);
+
+-- hiden --
+template<typename Derived, typename Base> void registerPlugin(const std::string & class_name, const std::string & base_class_name)
+template<typename Base> Base * createInstance(const std::string & derived_class_name, ClassLoader * loader)
+template<typename Base> std::vector<std::string> getAvailableClasses(ClassLoader * loader)
+
+}
+}
+@enduml

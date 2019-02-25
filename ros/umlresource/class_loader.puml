@@ -1,0 +1,35 @@
+@startuml
+namespace class_loader #DDDDDD {
+'note top of AbstractMetaObjectBase : typedef std::vector<class_loader::ClassLoader *> ClassLoaderVector;
+class ClassLoader {
+-- public method --
++explicit ClassLoader(const std::string & library_path, bool ondemand_load_unload = false);
++virtual ~ClassLoader();
++template<class Base> std::vector<std::string> getAvailableClasses();
++std::string getLibraryPath();
++template<class Base> std::shared_ptr<Base> createSharedInstance(const std::string & derived_class_name)
++template<class Base> boost::shared_ptr<Base> createInstance(const std::string & derived_class_name);
++template<class Base> UniquePtr<Base> createUniqueInstance(const std::string & derived_class_name)
++template<class Base> Base * createUnmanagedInstance(const std::string & derived_class_name);
++template<class Base> bool isClassAvailable(const std::string & class_name);
++bool isLibraryLoaded();
++bool isLibraryLoadedByAnyClassloader();
++bool isOnDemandLoadUnloadEnabled();
++void loadLibrary();
++int unloadLibrary();
+-- private method --
+-template<class Base> void onPluginDeletion(Base * obj);
+-template<class Base> Base * createRawInstance(const std::string & derived_class_name, bool managed)
+-static bool hasUnmanagedInstanceBeenCreated();
+-int unloadLibraryInternal(bool lock_plugin_ref_count);
+-- private data --
+-bool ondemand_load_unload_;
+-std::string library_path_;
+-int load_ref_count_;
+-boost::recursive_mutex load_ref_count_mutex_;
+-int plugin_ref_count_;
+-boost::recursive_mutex plugin_ref_count_mutex_;
+-static bool has_unmananged_instance_been_created_;
+}
+
+@enduml
