@@ -1,0 +1,80 @@
+@startuml
+
+namespace class_loader.impl #DDDDDD {
+note top of AbstractMetaObjectBase : typedef std::vector<class_loader::ClassLoader *> ClassLoaderVector;
+class AbstractMetaObjectBase {
+-- public method --
++AbstractMetaObjectBase(const std::string & class_name, const std::string & base_class_name);
++~AbstractMetaObjectBase();
++std::string className() const;
++std::string baseClassName() const;
++std::string typeidBaseClassName() const;
++std::string getAssociatedLibraryPath();
++void setAssociatedLibraryPath(std::string library_path);
++void addOwningClassLoader(ClassLoader * loader);
++void removeOwningClassLoader(const ClassLoader * loader);
++bool isOwnedBy(const ClassLoader * loader);
++bool isOwnedByAnybody();
++ClassLoaderVector getAssociatedClassLoaders();
+-- protected method --
+#virtual void dummyMethod()
+-- protected data --
+#ClassLoaderVector associated_class_loaders_
+#std::string associated_library_path_
+#std::string base_class_name_
+#std::string class_name_
+#std::string typeid_base_class_name_
+}
+
+
+class AbstractMetaObject <<class B >>{
+-- public method --
++AbstractMetaObject(const std::string & class_name, const std::string & base_class_name)
+{abstract}+virtual B * create() const = 0;
+-- private method --
+-AbstractMetaObject();
+-AbstractMetaObject(const AbstractMetaObject &);
+-AbstractMetaObject & operator=(const AbstractMetaObject &);
+}
+
+
+class MetaObject <<class C, class B>>{
+-- public method --
++MetaObject(const std::string & class_name, const std::string & base_class_name)
++B * create() const
+}
+AbstractMetaObjectBase <|-- AbstractMetaObject
+AbstractMetaObject <|-- MetaObject
+}
+
+
+
+
+
+
+
+'
+'abstract class AbstractList
+'abstract AbstractCollection
+'interface List
+'interface Collection
+'
+'List <|-- AbstractList
+'Collection <|-- AbstractCollection
+'
+'Collection <|- List
+'AbstractCollection <|- AbstractList
+'AbstractList <|-- ArrayList
+'
+'class ArrayList {
+'Object[] elementData
+'size()
+'}
+'
+'enum TimeUnit {
+'DAYS
+'HOURS
+'MINUTES
+'}
+
+@enduml
