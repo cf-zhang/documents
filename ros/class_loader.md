@@ -218,23 +218,27 @@ class_loader::class_loader_private::registerPlugin<Base,Derived>();
 class_loader的核心是在命名空间pulgins::plugins_private中的一组全局函数内实现的。最初的想法是在一个类中创建内容，但是由于实现问题，恢复了必须使所有数据结构都全局可用，并且拥有一个类是没有意义的。更清晰的结果只是一组全局函数，并在class_loader:：Classloader和class_loader:：MultilibraryClassloader类中写入公开的接口。
 
  
+# class_loader 项目阅读
 
+## visibility_contril.hpp
 
+该文件中中通过一系列的宏判断和宏定义来约定符号可见性的控制方法，并且兼容了win和linux系统上的动态库符号导出行为。
 
+在Linux下动态库(.so)中，通过GCC的C++ visibility属性可以控制共享文件导出符号。在GCC 4.0及以上版本中，有个visibility属性，可见属性可以应用到函数、变量、模板以及C++类。
 
+限制符号可见性的原因：从动态库中尽可能少地输出符号是一个好的实践经验。输出一个受限制的符号会提高程序的模块性，并隐藏实现的细节。动态库装载和识别的符号越少，程序启动和运行的速度就越快。导出所有符号会减慢程序速度，并耗用大量内存。
 
+> “default”：用它定义的符号将被导出，动态库中的函数默认是可见的。
 
+> ”hidden”：用它定义的符号将不被导出，并且不能从其它对象进行使用.
 
+动态库中的函数默认是被隐藏的。default意味着该方法对其它模块是可见的。而hidden表面该方法符号不会被放到动态符号表里，所以其它模块(可执行文件或者动态库)不可以通过符号表访问该方法。
 
+要定义GNU属性，需要包含__attribute__和用括号括住的内容。可以将符号的可见性指定为visibility(“hidden”)，这将不允许它们在库中被导出，但是可以在源文件之间共享。实际上，隐藏的符号将不会出现在动态符号表中，但是还被留在符号表中用于静态链接。
 
+导出列表由编译器在创建共享库的时候自动生成，也可以由开发人员手工编写。导出列表的原理是显式地告诉编译器可以通过外部文件从对象文件导出的符号是哪些。GNU用户将此类外部文件称作为”导出映射”。
 
+## exection.hpp
 
+![class_loader exection 类图](http://www.plantuml.com/plantuml/png/SoWkIImgAStDuGh9BCb9LL1ApaaiBexFoKzCIIrISAr8JIueoSpFUxvnzzFP-vIumB8AnIKfLbP5fNabcRcfyQb5HVb5K0bd4Ea3rkjQaPmArWgLyibCAaeigWH9uf0ApSl18kbSb9fOaWes65tABn_5lipY4YGbc6vKiAdHrSNkH6o2OEMOpYQi7E4LmXfGl4TOENulEwJcfG1Z4W00)
 
-
-
-
-
-
-
-
- 

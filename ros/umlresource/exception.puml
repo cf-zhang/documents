@@ -1,0 +1,14 @@
+@startuml
+Title "class_loader Execption类图"
+class std::runtime_error
+class ClassLoaderException
+class LibraryLoadException
+class LibraryUnloadException
+class CreateClassException
+class NoClassLoaderExistsException
+std::runtime_error <|-- ClassLoaderException
+ClassLoaderException <|-- LibraryLoadException
+ClassLoaderException <|-- LibraryUnloadException
+ClassLoaderException <|-- CreateClassException
+ClassLoaderException <|-- NoClassLoaderExistsException
+@enduml
