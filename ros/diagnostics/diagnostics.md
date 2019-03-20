@@ -38,3 +38,21 @@ diagnostic_analysis中的工具允许用户将诊断包文件转换为一个或�
 [diagnostic_updater](diagnostic_updater.md)
 
 [self_test](self_test.md)
+
+## Tutorials
+
+[Configuring a Robot's Diagnostic Aggregator](tutorials/tutorials_1.md)
+
+[Creating a Diagnostic Analyzer](tutorials/tutorials_2.md)
+
+[Analyzing Diagnostic Logs Off-Line](tutorials/tutorials_3.md)
+
+[Using the Robot Monitor](tutorials/tutorials_4.md)
+
+[Using the GenericAnalyzer](tutorials/tutorials_5.md)
+
+[Starting the Runtime Monitor](tutorials/tutorials_6.md)
+
+[Adding Analyzers at Runtime](tutorials/tutorials_7.md)
+
+[Viewing Logged Diagnostics in rqt_bag](tutorials/tutorials_8.md)
