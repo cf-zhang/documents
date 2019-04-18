@@ -425,8 +425,6 @@ class Costmap2DROS
 
 
 
-
-
 Costmap2DROS *-- Costmap2DPublisher
 Costmap2DROS *-- LayeredCostmap
 Costmap2DPublisher *-- Costmap2D
@@ -446,21 +444,5 @@ Layer <|-- CostmapLayer
 CostmapLayer <|-- ObstacleLayer
 ObstacleLayer <|-- VoxelLayer
 
-
-
-
-
-class Layerr{
--- public method --
-
--- protected data --
-
--- protected method --
-
--- private method --
-
--- private data --
-
-}
 
 @enduml
