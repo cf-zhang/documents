@@ -1,0 +1,76 @@
+@startuml
+class NavGridInfo{
+-- public method --
+bool operator == () const
+bool operator != () const
+std::string toString() const
+inline std::ostream& operator<<();
+-- public data --
+  unsigned int width = 0;
+  unsigned int height = 0;
+  double resolution = 1.0;
+  std::string frame_id = "map";
+  double origin_x = 0.0;
+  double origin_y = 0.0;
+}
+
+class NavGrid << T >>
+{
+-- public method --
++explicit NavGrid()
++virtual void reset() = 0;
++virtual T getValue()
++virtual void setValue();
++T getValue(const Index& index)
++T operator() ()
++T operator() ();
++void setValue();
++virtual void setInfo() = 0;
++virtual void updateInfo()
++inline NavGridInfo getInfo() const
++void setDefaultValue(const T new_value)
++inline unsigned int getWidth() const
++inline unsigned int getHeight() const
++inline double getResolution() const
++inline std::string getFrameId() const
++inline double getOriginX() const
++inline double getOriginY() const
+-- protected data --
+#NavGridInfo info_;
+#T default_value_;
+}
+
+class VectorNavGrid <<NavGrid>>
+{
+-- public method --
++using NavGrid<T>::NavGrid;
++void reset() override;
++void setInfo() override
++void updateInfo() override
++void setValue() override
++T getValue() const override
++using NavGrid<T>::operator();
++using NavGrid<T>::getValue;
++using NavGrid<T>::setValue;
++T  operator[] (unsigned int i) const
++T& operator[] (unsigned int i)
++unsigned int size() const;
++inline unsigned int getIndex() const
++inline void indexToCells() const
+-- protected data --
+-std::vector<T> data_;
+}
+
+NavGrid *-- NavGridInfo
+NavGrid <|-- VectorNavGrid
+
+class Name{
+-- public method --
+-- public data --
+-- protected method --
+-- protected data --
+-- private method --
+-- private data --
+}
+
+@enduml

@@ -1,0 +1,203 @@
+@startuml
+
+Title "globalplanner类图"
+
+class GlobalPlanner{
+-- public method --
++virtual ~GlobalPlanner()
++virtual void initialize() = 0;
++virtual forwardx_nav_msgs::Path2D makePlan() = 0;
+}
+
+class DluxGlobalPlanner{
+-- public method --
++DluxGlobalPlanner();
++void initialize() override;
++forwardx_nav_msgs::Path2D makePlan() override;
++virtual bool isPlanValid() const;
+-- protected method --
+#virtual bool hasValidCachedPath();
+#virtual bool shouldReturnCachedPathImmediately() const;
+#virtual bool shouldReturnNewPath() const;
+-- protected data --
+-pluginlib::ClassLoader<PotentialCalculator> calc_loader_;
+-boost::shared_ptr<PotentialCalculator> calculator_;
+-pluginlib::ClassLoader<Traceback> traceback_loader_;
+-boost::shared_ptr<Traceback> traceback_;
+-forwardx_nav_core::Costmap::Ptr costmap_;
+-TFListenerPtr tf_;
+-PotentialGrid potential_grid_;
+-CostInterpreter::Ptr cost_interpreter_;
+-bool path_caching_;
+-double improvement_threshold_;
+-forwardx_nav_msgs::Path2D cached_path_;
+-unsigned int cached_goal_x_, cached_goal_y_;
+-double cached_path_cost_;
+-nav_grid_pub_sub::ScaleGridPublisher<float> potential_pub_;
+-bool print_statistics_;
+}
+
+class CostInterpreter{
+-- public method --
++void initialize();
++void setConfiguration();
++inline unsigned char getNeutralCost() const
++inline float interpretCost() const
++inline float getCost(const unsigned int x, const unsigned int y) const
++inline bool isLethal(const float cost) const
++typedef std::shared_ptr<CostInterpreter> Ptr;
+-- protected data --
+-std::array<float, 256> cached_costs_;
+-unsigned char neutral_cost_;
+-forwardx_nav_core::Costmap::Ptr costmap_;
+}
+
+class PotentialCalculator{
+-- public method --
++PotentialCalculator();
++virtual ~PotentialCalculator();
++virtual void initialize()
++virtual unsigned int updatePotentials() = 0;
+-- protected data --
+#CostInterpreter::Ptr cost_interpreter_;
+}
+class CostMap
+class Traceback{
+-- public method --
++Traceback();
++virtual ~Traceback();
++virtual void initialize();
++virtual forwardx_nav_msgs::Path2D getPath() = 0;
+-- protected method --
+#forwardx_nav_msgs::Path2D mapPathToWorldPath();
+-- protected data --
+#CostInterpreter::Ptr cost_interpreter_;
+}
+
+class AStar{
+-- public method --
++void initialize() override;
++unsigned int updatePotentials() override;
+-- protected method --
+#void add();
+#float getHeuristicValue() const;
+-- protected data --
+#AStarQueue queue_;
+#bool manhattan_heuristic_;
+#bool use_kernel_;
+#double minimum_requeue_change_;
+}
+
+class Dijkstra{
+-- public method --
++unsigned int updatePotentials() override;
+-- protected method --
+#void add();
+-- protected data --
+#std::queue<forwardx_nav_grid::Index> queue_;
+}
+
+class GradientPath{
+-- public method --
++void initialize() override;
++forwardx_nav_msgs::Path2D getPath() override;
+-- protected method --
+#bool shouldGridStep();
+#forwardx_nav_grid::Index gridStep();
+#inline void calculateGradient();
+-- protected data --
+#double step_size_;
+#double lethal_cost_;
+#double iteration_factor_;
+#bool grid_step_near_high_;
+#forwardx_nav_grid::VectorNavGrid<double> gradx_, grady_;
+}
+
+class GridPath{
+-- public method --
++forwardx_nav_msgs::Path2D getPath() override;
+}
+class VonNeumannPath{
+-- public method --
++forwardx_nav_msgs::Path2D getPath() override;
+}
+
+class NavGridInfo{
+-- public method --
+bool operator == () const
+bool operator != () const
+std::string toString() const
+inline std::ostream& operator<<();
+-- public data --
+  unsigned int width = 0;
+  unsigned int height = 0;
+  double resolution = 1.0;
+  std::string frame_id = "map";
+  double origin_x = 0.0;
+  double origin_y = 0.0;
+}
+
+class NavGrid << T >>
+{
+-- public method --
++explicit NavGrid()
++virtual void reset() = 0;
++virtual T getValue()
++virtual void setValue();
++T getValue(const Index& index)
++T operator() ()
++T operator() ();
++void setValue();
++virtual void setInfo() = 0;
++virtual void updateInfo()
++inline NavGridInfo getInfo() const
++void setDefaultValue(const T new_value)
++inline unsigned int getWidth() const
++inline unsigned int getHeight() const
++inline double getResolution() const
++inline std::string getFrameId() const
++inline double getOriginX() const
++inline double getOriginY() const
+-- protected data --
+#NavGridInfo info_;
+#T default_value_;
+}
+
+class VectorNavGrid <<NavGrid>>
+{
+-- public method --
++using NavGrid<T>::NavGrid;
++void reset() override;
++void setInfo() override
++void updateInfo() override
++void setValue() override
++T getValue() const override
++using NavGrid<T>::operator();
++using NavGrid<T>::getValue;
++using NavGrid<T>::setValue;
++T  operator[] (unsigned int i) const
++T& operator[] (unsigned int i)
++unsigned int size() const;
++inline unsigned int getIndex() const
++inline void indexToCells() const
+-- protected data --
+-std::vector<T> data_;
+}
+
+NavGrid *-- NavGridInfo
+NavGrid <|-- VectorNavGrid
+
+
+GlobalPlanner <|-- DluxGlobalPlanner
+DluxGlobalPlanner *-- CostInterpreter
+DluxGlobalPlanner *-- CostMap
+DluxGlobalPlanner *-- VectorNavGrid
+PotentialCalculator *-- CostInterpreter
+Traceback *-- CostInterpreter
+PotentialCalculator <|-- AStar
+PotentialCalculator <|-- Dijkstra
+Traceback <|-- GradientPath
+Traceback <|-- GridPath
+Traceback <|-- VonNeumannPath
+
+@enduml
