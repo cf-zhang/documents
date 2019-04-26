@@ -1,0 +1,191 @@
+@startuml
+Title "local_planner类图"
+class LocalPlanner{
+-- public method --
++virtual ~LocalPlanner();
++virtual void initialize() = 0;
++virtual void setGoalPose() = 0;
++virtual void setPlan() = 0;
++virtual forwardx_nav_msgs::Twist2DStamped computeVelocityCommands() = 0;
++virtual bool isGoalReached() = 0;
+
+}
+
+class DWBLocalPlanner
+{
+-- public method --
++DWBLocalPlanner();
++virtual ~DWBLocalPlanner()
++void initialize() override;
++void setGoalPose() override;
++void setPlan(const forwardx_nav_msgs::Path2D& path) override;
++forwardx_nav_msgs::Twist2DStamped computeVelocityCommands() override;
++bool isGoalReached() override;
++virtual dwb_msgs::TrajectoryScore scoreTrajectory();
+-- protected method --
+#virtual void prepare();
+#virtual dwb_msgs::TrajectoryScore coreScoringAlgorithm();
+#virtual forwardx_nav_msgs::Path2D transformGlobalPlan();
+#geometry_msgs::Pose2D transformPoseToLocal();
+#std::string resolveCriticClassName(std::string base_name);
+#virtual void loadCritics(const std::string name);
+-- protected data --
+#forwardx_nav_msgs::Path2D global_plan_;
+#forwardx_nav_msgs::Pose2DStamped goal_pose_;
+#bool prune_plan_;
+#double prune_distance_;
+#bool debug_trajectory_details_;
+#bool short_circuit_trajectory_evaluation_;
+#pluginlib::ClassLoader<TrajectoryGenerator> traj_gen_loader_;
+#TrajectoryGenerator::Ptr traj_generator_;
+#pluginlib::ClassLoader<GoalChecker> goal_checker_loader_;
+#GoalChecker::Ptr goal_checker_;
+#pluginlib::ClassLoader<TrajectoryCritic> critic_loader_;
+#std::vector<TrajectoryCritic::Ptr> critics_;
+#std::vector<std::string> default_critic_namespaces_;
+#forwardx_nav_core::Costmap::Ptr costmap_;
+#bool update_costmap_before_planning_;
+#TFListenerPtr tf_;
+#DWBPublisher pub_;
+#ros::NodeHandle planner_nh_;
+}
+
+class DebugDWBLocalPlanner
+{
+-- public method --
++void initialize() override;
+-- protected method --
+#bool generateTwistsService();
+#bool generateTrajectoryService();
+#bool scoreTrajectoryService();
+#bool getCriticScoreService();
+#bool debugLocalPlanService();
+#TrajectoryCritic::Ptr getCritic();
+-- protected data --
+#ros::ServiceServer twist_gen_service_,
+#ros::ServiceServer generate_traj_service_,
+#ros::ServiceServer  score_service_,
+#ros::ServiceServer critic_service_,
+#ros::ServiceServer  debug_service_;
+}
+
+class GoalChecker
+{
+-- public method --
++using Ptr = std::shared_ptr<dwb_local_planner::GoalChecker>;
++virtual ~GoalChecker()
++virtual void initialize() = 0;
++virtual void reset()
++virtual bool isGoalReached() = 0;
+}
+
+
+class IllegalTrajectoryTracker
+{
+-- public method --
++IllegalTrajectoryTracker()
++void addIllegalTrajectory();
++void addLegalTrajectory();
++std::map< std::pair<std::string, std::string>, double> getPercentages() const;
++std::string getMessage() const;
+-- protected data --
+#std::map< std::pair<std::string, std::string>, unsigned int> counts_;
+#unsigned int legal_count_, illegal_count_;
+}
+
+class NoLegalTrajectoriesException{
+-- public method --
++explicit NoLegalTrajectoriesException();
+-- public data --
++IllegalTrajectoryTracker tracker_;
+}
+
+class DWBPublisher
+{
+-- public method --
++void initialize(ros::NodeHandle& nh);
++bool shouldRecordEvaluation()
++void publishEvaluation();
++void publishLocalPlan();
++void publishCostGrid();
++void publishGlobalPlan();
++void publishTransformedPlan();
++void publishLocalPlan();
++void publishInputParams();
+-- protected method --
+#void publishTrajectories();
+#void publishGenericPlan();
+
+-- protected data --
+#bool publish_evaluation_, publish_global_plan_,
+#bool publish_transformed_, publish_local_plan_,
+#bool publish_trajectories_;
+#bool publish_cost_grid_pc_, publish_input_params_;
+#ros::Duration marker_lifetime_;
+#ros::Publisher eval_pub_, global_pub_
+#ros::Publisher transformed_pub_,
+#ros::Publisher local_pub_, marker_pub_,
+#ros::Publisher cost_grid_pc_pub_,
+#ros::Publisher info_pub_, pose_pub_,
+#ros::Publisher goal_pub_, velocity_pub_;
+}
+
+class TrajectoryCritic
+{
+-- public method --
++using Ptr = std::shared_ptr<dwb_local_planner::TrajectoryCritic>;
++virtual ~TrajectoryCritic()
++void initialize()
++virtual void onInit()
++virtual void reset()
++virtual bool prepare()
++virtual double scoreTrajectory() = 0;
++virtual void debrief()
++virtual void addCriticVisualization()
++std::string getName()
++virtual double getScale() const
++void setScale()
+-- protected data --
+#std::string name_;
+#forwardx_nav_core::Costmap::Ptr costmap_;
+#double scale_;
+#ros::NodeHandle critic_nh_, planner_nh_;
+}
+
+class TrajectoryGenerator
+{
+-- public method --
++using Ptr = std::shared_ptr<dwb_local_planner::TrajectoryGenerator>;
++virtual ~TrajectoryGenerator()
++virtual void initialize() = 0;
++virtual void reset()
++virtual void startNewIteration() = 0;
++virtual bool hasMoreTwists() = 0;
++virtual forwardx_nav_msgs::Twist2D nextTwist() = 0;
++virtual std::vector<forwardx_nav_msgs::Twist2D> getTwists()
++virtual dwb_msgs::Trajectory2D generateTrajectory() = 0;
+}
+
+
+
+NoLegalTrajectoriesException *-- IllegalTrajectoryTracker
+LocalPlanner *-- GoalChecker
+LocalPlanner *-- DWBPublisher
+LocalPlanner *-- TrajectoryCritic
+LocalPlanner *-- TrajectoryGenerator
+DWBLocalPlanner <|-- DebugDWBLocalPlanner
+LocalPlanner <|-- DWBLocalPlanner
+@enduml
+
+{
+-- public method --
+
+-- public data --
+
+-- protected method --
+-- protected data --
+
+-- private method --
+-- private data --
+
+}
