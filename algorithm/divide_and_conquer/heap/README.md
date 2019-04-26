@@ -23,7 +23,7 @@ Delete
 * 删除Root
 * last element -> root element
 * then adjust from top to down; compare 2 child and select the bigger
-
+* O(log n)
 Note: 删除一个节点放到最后留白的位置，迭代删完所有的节点后，会得到一个有序序列，也就是Heap-Sort
 #### Heap Sort
 * 创建一个Heap 通过一个接一个的插入来实现 O(log n)
