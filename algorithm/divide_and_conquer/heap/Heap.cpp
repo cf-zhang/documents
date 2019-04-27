@@ -14,10 +14,10 @@ void swap(int &a, int &b) {
     a = b;
     b = tmp;
 }
-
+template <typename T>
 class Heap {
 public:
-    Heap(const vector<int> &array, bool (*compare)(int, int)) : compare_(compare) {
+    Heap(const vector<T> &array, bool (*compare)(T, T)) : compare_(compare) {
         if (array.size() > 0) {
             data_.insert(data_.begin(), -1);
             data_.insert(data_.end(), array.begin(), array.end());
@@ -39,12 +39,19 @@ public:
         }
     }
 
+    void heapSort(vector<T> &array){
+        int value;
+        while (data_.size()>0){
+            pop(value);
+            array.push_back(value);
+        }
+    }
     /**
      * insert to end free space
      * adjust child element with parent elements by value
      * @param node  the element to insert
      */
-    void push(int node) {
+    void push(T node) {
         data_.insert(data_.end(), node);
         int next_disposal = adjustUpward(data_.size() - 1);
         while (-1 != next_disposal) {
@@ -66,7 +73,7 @@ public:
      * @param value [out] the value poped
      * @return the poped value
      */
-    int pop(int &value) {
+    T pop(T &value) {
         value = top();
         swap(data_[1], data_.back());
         data_.erase(data_.end()-1);
@@ -132,9 +139,9 @@ public:
     }
 
 private:
-    vector<int> data_;
+    vector<T> data_;
 
-    bool (*compare_)(int, int);
+    bool (*compare_)(T, T);
 };
 
 bool compare_greater(int a, int b) {
@@ -148,9 +155,11 @@ bool compare_less(int a, int b) {
 int main(int argc, char *argv[]) {
     vector<int> array{3, 6, 2, 4, 1, 7, 8};
 
-    Heap heap(array, compare_greater);
+    Heap<int> heap(array, compare_greater);
     heap.push(9);
     int value;
     heap.pop(value);
+//    vector<int> a;
+//    heap.heapSort(a);
     cout << heap;
 }
