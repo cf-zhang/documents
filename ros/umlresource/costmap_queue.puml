@@ -1,0 +1,74 @@
+@startuml
+Title "costmap_queue 类图"
+class MapBasedQueue
+{
+-- public method --
++explicit MapBasedQueue();
++virtual void reset();
++void enqueue();
++bool isEmpty();
++item_t& front();
++void pop();
+
+-- protected data --
+#using ItemMap = std::map<double, std::vector<item_t>>;
+#using ItemMapIterator = typename ItemMap::iterator;
+#bool reset_bins_;
+#ItemMap item_bins_;
+#unsigned int item_count_;
+#ItemMapIterator iter_;
+#ItemMapIterator last_insert_iter_;
+
+}
+
+class CellData
+{
+-- public method --
++CellData();
+-- public data --
++double distance_;
++unsigned int x_, y_;
++unsigned int src_x_, src_y_;
+}
+
+class CostmapQueue
+{
+-- public method --
++explicit CostmapQueue();
++void reset() override;
++void enqueueCell();
++CellData getNextCell();
++virtual int getMaxDistance() const;
++virtual bool validCellToQueue();
++using Ptr = std::shared_ptr<CostmapQueue>;
+
+-- protected method --
+#void enqueueCell(...);
+#void computeCache();
+#inline double distanceLookup();
+-- protected data --
+#forwardx_nav_core::Costmap& costmap_;
+#forwardx_nav_grid::VectorNavGrid<unsigned char> seen_;
+#bool manhattan_;
+#std::vector<std::vector<double> > cached_distances_;
+#int cached_max_distance_;
+}
+
+class LimitedCostmapQueue
+{
+-- public method --
++LimitedCostmapQueue();
++bool validCellToQueue() override;
++int getMaxDistance() const override;
+
+-- protected data --
+#int max_distance_;
+
+}
+
+
+CostmapQueue *-- CellData
+MapBasedQueue <|-- CostmapQueue
+CostmapQueue <|-- LimitedCostmapQueue
+
+@enduml

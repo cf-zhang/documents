@@ -1,0 +1,163 @@
+@startuml
+Title "dwb plugins" 类图
+class KinematicParameters
+{
+-- public method --
++KinematicParameters();
++void initialize(const ros::NodeHandle& nh);
++inline double getMinX() { return min_vel_x_; }
++inline double getMaxX() { return max_vel_x_; }
++inline double getAccX() { return acc_lim_x_; }
++inline double getDecelX() { return decel_lim_x_; }
++inline double getMinY() { return min_vel_y_; }
++inline double getMaxY() { return max_vel_y_; }
++inline double getAccY() { return acc_lim_y_; }
++inline double getDecelY() { return decel_lim_y_; }
++inline double getMinSpeedXY() { return min_speed_xy_; }
++inline double getMinTheta() { return -max_vel_theta_; }
++inline double getMaxTheta() { return max_vel_theta_; }
++inline double getAccTheta() { return acc_lim_theta_; }
++inline double getDecelTheta() { return decel_lim_theta_; }
++inline double getMinSpeedTheta() { return min_speed_theta_; }
++bool isValidSpeed(double x, double y, double theta);
++using Ptr = std::shared_ptr<KinematicParameters>;
+-- protected data --
+#double min_vel_x_, min_vel_y_;
+#double max_vel_x_, max_vel_y_, max_vel_theta_;
+#double min_speed_xy_, max_speed_xy_;
+#double min_speed_theta_;
+#double acc_lim_x_, acc_lim_y_, acc_lim_theta_;
+#double decel_lim_x_, decel_lim_y_, decel_lim_theta_;
+#// Cached square values of min_speed_xy and max_speed_xy
+#double min_speed_xy_sq_, max_speed_xy_sq_;
+#void reconfigureCB(KinematicParamsConfig &config, uint32_t level);
+#std::shared_ptr<dynamic_reconfigure::Server<KinematicParamsConfig> > dsrv_;
+}
+
+class GoalChecker
+
+class SimpleGoalChecker
+{
+-- public method --
++SimpleGoalChecker();
++void initialize() override;
++void reset() override;
++bool isGoalReached() override;
+-- protected data --
+#double xy_goal_tolerance_, yaw_goal_tolerance_;
+#bool stateful_, check_xy_;
+#double xy_goal_tolerance_sq_;
+}
+
+class StoppedGoalChecker
+{
+-- public method --
++StoppedGoalChecker();
++void initialize() override;
++bool isGoalReached() override;
+-- protected data --
+#double rot_stopped_velocity_, trans_stopped_velocity_;
+}
+
+
+class VelocityIterator
+{
+-- public method --
++virtual ~VelocityIterator();
++virtual void initialize() = 0;
++virtual void startNewIteration() = 0;
++virtual bool hasMoreTwists() = 0;
++virtual forwardx_nav_msgs::Twist2D nextTwist() = 0;
+}
+
+class OneDVelocityIterator
+{
+-- public method --
++OneDVelocityIterator()
++double getVelocity() const
++OneDVelocityIterator& operator++()
++void reset()
++bool isFinished() const
+-- private data --
+-bool return_zero_, return_zero_now_;
+-double min_vel_, max_vel_;
+-double current_;
+-double increment_;
+}
+class XYThetaIterator
+{
+-- public method --
++XYThetaIterator()
++void initialize() override;
++void startNewIteration() override;
++bool hasMoreTwists() override;
++forwardx_nav_msgs::Twist2D nextTwist() override;
+protected:
+#virtual bool isValidVelocity();
+#void iterateToValidVelocity();
+#int vx_samples_, vy_samples_, vtheta_samples_;
+#KinematicParameters::Ptr kinematics_;
+#std::shared_ptr<OneDVelocityIterator> x_it_, y_it_, th_it_;
+}
+
+class TrajectoryGenerator
+
+class StandardTrajectoryGenerator
+{
+--public method --
++void initialize(ros::NodeHandle& nh) override;
++void startNewIteration() override;
++bool hasMoreTwists() override;
++forwardx_nav_msgs::Twist2D nextTwist() override;
++dwb_msgs::Trajectory2D generateTrajectory() override;
+-- protected method --
+#virtual void initializeIterator();
+#virtual void checkUseDwaParam();
+#virtual forwardx_nav_msgs::Twist2D computeNewVelocity();
+#virtual geometry_msgs::Pose2D computeNewPosition();
+#virtual std::vector<double> getTimeSteps();
+-- protected data --
+#KinematicParameters::Ptr kinematics_;
+#std::shared_ptr<VelocityIterator> velocity_iterator_;
+#double sim_time_;
+#bool discretize_by_time_;
+#double time_granularity_;
+#double linear_granularity_;
+#double angular_granularity_;
+#bool include_last_point_;
+}
+
+class LimitedAccelGenerator
+{
+public:
++void initialize() override;
++void checkUseDwaParam() override;
++void startNewIteration() override;
+-- protected method --
+#forwardx_nav_msgs::Twist2D computeNewVelocity() override;
+-- protected data --
+#double acceleration_time_;
+}
+
+XYThetaIterator *-- KinematicParameters
+XYThetaIterator *-- OneDVelocityIterator
+VelocityIterator <|-- XYThetaIterator
+GoalChecker <|-- SimpleGoalChecker
+SimpleGoalChecker <|-- StoppedGoalChecker
+TrajectoryGenerator <|-- StandardTrajectoryGenerator
+StandardTrajectoryGenerator <|-- LimitedAccelGenerator
+
+@enduml
+
+{
+-- public method --
+
+-- public data --
+
+-- protected method --
+-- protected data --
+
+-- private method --
+-- private data --
+
+}

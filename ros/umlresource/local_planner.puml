@@ -8,7 +8,6 @@ class LocalPlanner{
 +virtual void setPlan() = 0;
 +virtual forwardx_nav_msgs::Twist2DStamped computeVelocityCommands() = 0;
 +virtual bool isGoalReached() = 0;
-
 }
 
 class DWBLocalPlanner
@@ -166,8 +165,6 @@ class TrajectoryGenerator
 +virtual dwb_msgs::Trajectory2D generateTrajectory() = 0;
 }
 
-
-
 NoLegalTrajectoriesException *-- IllegalTrajectoryTracker
 LocalPlanner *-- GoalChecker
 LocalPlanner *-- DWBPublisher
@@ -175,17 +172,7 @@ LocalPlanner *-- TrajectoryCritic
 LocalPlanner *-- TrajectoryGenerator
 DWBLocalPlanner <|-- DebugDWBLocalPlanner
 LocalPlanner <|-- DWBLocalPlanner
+
 @enduml
 
-{
--- public method --
 
--- public data --
-
--- protected method --
--- protected data --
-
--- private method --
--- private data --
-
-}
