@@ -1,0 +1,210 @@
+@startuml
+Title "dwb critics class map"
+
+class TrajectoryCritic
+
+class BaseObstacleCritic
+{
+-- public method --
++void onInit() override;
++double scoreTrajectory() override;
++void addCriticVisualization() override;
++virtual double scorePose();
++virtual bool isValidCost();
+-- protected data --
+#bool sum_scores_;
+}
+
+class MapGridCritic
+{
+-- public method --
++MapGridCritic()
++void onInit() override;
++double scoreTrajectory() override;
++void addCriticVisualization() override;
++double getScale() const override
++virtual double scorePose();
++inline double getScore()
++void setAsObstacle();
+
+-- protected method --
+#enum class ScoreAggregationType {Last, Sum, Product};
+#void reset() override;
+#void propogateManhattanDistances();
+-- protected data --
+#std::shared_ptr<MapGridQueue> queue_;
+#forwardx_nav_grid::VectorNavGrid<double> cell_values_;
+#double obstacle_score_, unreachable_score_;
+#bool stop_on_failure_;
+#ScoreAggregationType aggregationType_;
+}
+
+class CostmapQueue
+
+class MapGridQueue
+{
+-- public method --
++MapGridQueue()
++bool validCellToQueue() override;
+-- protected method --
+#MapGridCritic& parent_;
+}
+
+
+class GoalDistCritic
+{
+-- public method --
++bool prepare() override;
+-- protected method --
+#bool getLastPoseOnCostmap();
+}
+
+class GoalAlignCritic
+{
+-- public method --
++GoalAlignCritic()
++void onInit() override;
++bool prepare() override;
++double scorePose() override;
+-- protected data --
+#double forward_point_distance_;
+}
+
+class ObstacleFootprintCritic
+{
+-- public method --
++void onInit() override;
++bool prepare() override;
++double scorePose() override;
++virtual double scorePose();
++double getScale() const override;
+-- protected data --
+#forwardx_nav_msgs::Polygon2D footprint_spec_;
+}
+
+
+
+class OscillationCritic
+{
+-- public method --
++void onInit() override;
++bool prepare() override;
++double scoreTrajectory() override;
++void reset() override;
++void debrief() override;
+-- protected method --
+#bool setOscillationFlags();
+#bool resetAvailable();
+-- protected data --
+#CommandTrend x_trend_, y_trend_, theta_trend_;
+#double oscillation_reset_dist_, oscillation_reset_angle_,
+#double x_only_threshold_;
+#double oscillation_reset_time_;
+#double oscillation_reset_dist_sq_;
+#geometry_msgs::Pose2D pose_, prev_stationary_pose_;
+#ros::Time prev_reset_time_;
+}
+
+
+class CommandTrend
+{
+-- public method --
++CommandTrend();
++void reset();
++bool update(double velocity);
++bool isOscillating(double velocity);
++bool hasSignFlipped();
+-- protected method --
+#enum class Sign { ZERO, POSITIVE, NEGATIVE };
+#Sign sign_;
+#bool positive_only_, negative_only_;
+}
+
+class PathAlignCritic
+{
+-- public method --
++PathAlignCritic();
++void onInit() override;
++bool prepare() override;
++double getScale() const override;
++double scorePose() override;
+-- protecte data --
+#bool zero_scale_;
+#double forward_point_distance_;
+}
+
+class PathDistCritic
+{
+-- public method --
++bool prepare() override;
+}
+
+
+class PreferForwardCritic
+{
+-- public method --
++PreferForwardCritic()
++void onInit() override;
++double scoreTrajectory() override;
+-- protected data --
+#double penalty_, strafe_x_,
+#double strafe_theta_, theta_scale_;
+}
+
+class RotateToGoalCritic
+{
+-- public method --
++void onInit() override;
++void reset() override;
++bool prepare() override;
++double scoreTrajectory() override;
++virtual double scoreRotation();
+-- protected data --
+#bool in_window_, rotating_;
+#double goal_yaw_;
+#double xy_goal_tolerance_;
+#double xy_goal_tolerance_sq_;
+#double current_xy_speed_sq_,
+#double stopped_xy_velocity_sq_;
+#double slowing_factor_;
+#double lookahead_time_;
+}
+
+
+class TwirlingCritic
+{
+-- public method --
++void onInit() override;
++double scoreTrajectory() override;
+}
+
+OscillationCritic +-- CommandTrend
+MapGridCritic +-- MapGridQueue
+CostmapQueue <|-- MapGridQueue
+TrajectoryCritic <|-- BaseObstacleCritic
+TrajectoryCritic <|-- MapGridCritic
+MapGridCritic <|--  GoalDistCritic
+GoalDistCritic <|-- GoalAlignCritic
+BaseObstacleCritic <|-- ObstacleFootprintCritic
+TrajectoryCritic <|-- OscillationCritic
+PathDistCritic <|-- PathAlignCritic
+MapGridCritic <|-- PathDistCritic
+TrajectoryCritic <|-- PreferForwardCritic
+TrajectoryCritic <|-- RotateToGoalCritic
+TrajectoryCritic <|-- TwirlingCritic
+
+@enduml
+
+
+{
+-- public method --
+
+-- public data --
+
+-- protected method --
+-- protected data --
+
+-- private method --
+-- private data --
+
+}
