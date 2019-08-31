@@ -1,0 +1,703 @@
+@startuml
+namespace base_local_planner #DDDDDD {
+class Costmap2D
+class WorldModel {
+-- public method --
++virtual double footprintCost(position, footprint,inscribed_radius,circumscribed_radius) = 0;
++double footprintCost(x, y, theta, footprint_spec,inscribed_radius = 0.0, circumscribed_radius=0.0)
++virtual ~WorldModel()
+-- protected method --
+#WorldModel()
+}
+
+class CostmapModel {
+-- public method --
++CostmapModel(costmap)
++virtual ~CostmapModel()
++virtual double footprintCost(position, footprint, inscribed_radius, circumscribed_radius)
++double lineCost(int x0, int x1, int y0, int y1) const;
++double pointCost(int x, int y) const;
+
+-- private data --
+const costmap_2d::Costmap2D& costmap_;
+}
+
+class FootprintHelper {
+-- public method --
++FootprintHelper();
++virtual ~FootprintHelper();
++getFootprintCells()
++void getLineCells(x0, x1, y0, y1, pts);
++void getFillCells(footprint);
+}
+
+class LatchedStopRotateController {
+-- public method --
++LatchedStopRotateController(name);
++virtual ~LatchedStopRotateController();
++bool isPositionReached(planner_util,global_pose);
++bool isGoalReached(planner_util,odom_helper,global_pose);
++void resetLatching()
++bool stopWithAccLimits(global_pose,robot_vel,cmd_vel,acc_lim,sim_period,
+      boost::function<bool (Eigen::Vector3f pos,
+                            Eigen::Vector3f vel,
+                            Eigen::Vector3f vel_samples)> obstacle_check);
++bool rotateToGoal(global_pose,robot_vel,goal_th,cmd_vel,acc_lim,sim_period,limits,
+      boost::function<bool (Eigen::Vector3f pos,
+                            Eigen::Vector3f vel,
+                            Eigen::Vector3f vel_samples)> obstacle_check);
++bool computeVelocityCommandsStopRotate(cmd_vel,acc_lim,sim_period,planner_util,odom_helper,global_pose,
+      boost::function<bool (Eigen::Vector3f pos,
+                            Eigen::Vector3f vel,
+                            Eigen::Vector3f vel_samples)> obstacle_check);
+
+-- private method --
+  inline double sign(double x)
+
+-- private data --
+  bool latch_xy_goal_tolerance_, xy_tolerance_latch_;
+  bool rotating_to_goal_;
+}
+
+class LineIterator
+{
+-- public method --
++LineIterator( int x0, int y0, int x1, int y1 )
++bool isValid() const
++int getX()
++int getY()
++int getX0()
++int getY0()
++int getX1()
++int getY1()
+}
+
+class LocalPlannerLimits
+{
+-- public method --
++LocalPlannerLimits()
++LocalPlannerLimits()
++~LocalPlannerLimits()
++Eigen::Vector3f getAccLimits()
+--public data --
++double max_vel_trans;
++double min_vel_trans;
++double max_vel_x;
++double min_vel_x;
++double max_vel_y;
++double min_vel_y;
++double max_vel_theta;
++double min_vel_theta;
++double acc_lim_x;
++double acc_lim_y;
++double acc_lim_theta;
++double acc_lim_trans;
++bool   prune_plan;
++double xy_goal_tolerance;
++double yaw_goal_tolerance;
++double trans_stopped_vel;
++double theta_stopped_vel;
++bool   restore_defaults;
+}
+
+class LocalPlannerUtil {
+
+-- public method --
++void reconfigureCB(config, restore_defaults)
++LocalPlannerUtil()
++~LocalPlannerUtil()
++void initialize(tf,costmap,global_frame);
++bool getGoal(geometry_msgs::PoseStamped& goal_pose)
++bool setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan)
++bool getLocalPlan(global_pose, transformed_plan)
++costmap_2d::Costmap2D* getCostmap()
++LocalPlannerLimits getCurrentLimits()
++std::string getGlobalFrame()
+-- private data --
++std::string name_;
++std::string global_frame_;
++costmap_2d::Costmap2D* costmap_;
++tf2_ros::Buffer* tf_;
++std::vector<geometry_msgs::PoseStamped> global_plan_;
++boost::mutex limits_configuration_mutex_;
++bool setup_;
++LocalPlannerLimits default_limits_;
++LocalPlannerLimits limits_;
++bool initialized_;
+
+}
+
+class MapCell{
+-- public method --
++MapCell();
++MapCell(const MapCell& mc);
+-- public data --
++unsigned int cx, cy;
++double target_dist;
++bool target_mark;
++bool within_robot;
+}
+
+class MapGrid{
+-- public method --
++MapGrid();
++MapGrid(unsigned int size_x, unsigned int size_y);
++MapCell& operator() (unsigned int x, unsigned int y)
++MapCell operator() (unsigned int x, unsigned int y) const
++MapCell& getCell(unsigned int x, unsigned int y)
++~MapGrid()
++MapGrid(const MapGrid& mg);
++MapGrid& operator= (const MapGrid& mg);
++void resetPathDist();
++void sizeCheck(unsigned int size_x, unsigned int size_y);
++void commonInit();
++size_t getIndex(int x, int y);
++inline double obstacleCosts()
++inline double unreachableCellCosts()
++inline bool updatePathCell(current_cell,check_cell,costmap);
++void adjustPlanResolution(global_plan_in,global_plan_out,resolution);
++void computeTargetDistance(dist_queue,costmap);
++void computeGoalDistance(dist_queue, costmap);
++void setTargetCells(costmap, global_plan);
++void setLocalGoal(costmap,global_plan);
+-- public data --
++double goal_x_, goal_y_;
++unsigned int size_x_, size_y_;
+
+-- private data --
+-std::vector<MapCell> map_;
+}
+
+class TrajectoryCostFunction {
+-- public method --
+virtual bool prepare() = 0;
+virtual double scoreTrajectory(Trajectory &traj) = 0;
+double getScale()
+void setScale(double scale)
++virtual ~TrajectoryCostFunction()
+-- protected method --
+TrajectoryCostFunction(double scale = 1.0)
+
+-- private data --
+-double scale_;
+}
+
+class MapGridCostFunction{
+-- public method --
++MapGridCostFunction(costmap_2d::Costmap2D* costmap,xshift = 0.0,yshift = 0.0,is_local_goal_function = false, aggregationType = Last);
++~MapGridCostFunction()
++void setTargetPoses(std::vector<geometry_msgs::PoseStamped> target_poses);
++void setXShift(double xshift) {xshift_ = xshift;}
++void setYShift(double yshift) {yshift_ = yshift;}
++void setStopOnFailure(bool stop_on_failure)
++bool prepare();
++double scoreTrajectory(Trajectory &traj);
++double obstacleCosts()
++double unreachableCellCosts()
++double getCellCosts(unsigned int cx, unsigned int cy);
+-- private data --
+-std::vector<geometry_msgs::PoseStamped> target_poses_;
+-costmap_2d::Costmap2D* costmap_;
+-base_local_planner::MapGrid map_;
+-CostAggregationType aggregationType_;
+-double xshift_;
+-double yshift_;
+-bool is_local_goal_function_;
+-bool stop_on_failure_;
+}
+
+class MapGridVisualizer {
+-- public method --
++MapGridVisualizer();
++void initialize(name, frame, cost_function);
++void publishCostCloud(const costmap_2d::Costmap2D* costmap_p_);
+-- private data --
+-std::string name_;
+-boost::function<> cost_function_;
+-ros::NodeHandle ns_nh_;
+-std::string frame_id_;
+-ros::Publisher pub_;
+}
+
+class ObstacleCostFunction{
+-- public method --
++ObstacleCostFunction(costmap_2d::Costmap2D* costmap);
++~ObstacleCostFunction();
++bool prepare();
++double scoreTrajectory(Trajectory &traj);
++void setSumScores(bool score_sums)
++void setParams(max_trans_vel, max_scaling_factor, scaling_speed);
++void setFootprint(footprint_spec);
++static double getScalingFactor();
++static double footprintCost();
+-- private data --
+-costmap_2d::Costmap2D* costmap_;
+-std::vector<geometry_msgs::Point> footprint_spec_;
+-base_local_planner::WorldModel* world_model_;
+-double max_trans_vel_;
+-bool sum_scores_;
+-double max_scaling_factor_, scaling_speed_;
+}
+
+class OdometryHelperRos {
+-- public method --
++OdometryHelperRos(std::string odom_topic = "");
++~OdometryHelperRos()
++void odomCallback(const nav_msgs::Odometry::ConstPtr& msg)
++void getOdom(nav_msgs::Odometry& base_odom)
++void getRobotVel(geometry_msgs::PoseStamped& robot_vel)
++void setOdomTopic(std::string odom_topic)
++std::string getOdomTopic()
+-- private data --
+-std::string odom_topic_;
+-ros::Subscriber odom_sub_;
+-nav_msgs::Odometry base_odom_;
+-boost::mutex odom_mutex_;
+-std::string frame_id_; ///< The frame_id associated this data
+}
+
+class OscillationCostFunction{
+-- public method --
++OscillationCostFunction();
++virtual ~OscillationCostFunction();
++double scoreTrajectory(Trajectory &traj);
++bool prepare() {return true;};
++void resetOscillationFlags();
++void updateOscillationFlags();
++void setOscillationResetDist(double dist, double angle);
+-- private data --
+-void resetOscillationFlagsIfPossible(const Eigen::Vector3f& pos, const Eigen::Vector3f& prev);
+-bool setOscillationFlags(base_local_planner::Trajectory* t, double min_vel_trans);
+-bool strafe_pos_only_, strafe_neg_only_, strafing_pos_, strafing_neg_;
+-bool rot_pos_only_, rot_neg_only_, rotating_pos_, rotating_neg_;
+-bool forward_pos_only_, forward_neg_only_, forward_pos_, forward_neg_;
+-double oscillation_reset_dist_, oscillation_reset_angle_;
+-Eigen::Vector3f prev_stationary_pos_;
+}
+class PlanarLaserScan {
+-- public method --
++PlanarLaserScan()
+-- public data --
++geometry_msgs::Point32 origin;
++sensor_msgs::PointCloud cloud;
++double angle_min, angle_max, angle_increment;
+}
+
+class PointGrid{
+-- public method --
++PointGrid();
++virtual ~PointGrid(){}
++void getPointsInRange();
++virtual double footprintCost();
++using WorldModel::footprintCost;
++void updateWorld();
++inline bool gridCoords() const
++inline void getCellBounds() const
+
++inline double sq_distance()
++inline bool gridCoords()
++inline unsigned int gridIndex() const
++inline double orient()
++template<typename T> inline double orient(const T& a, const T& b, const T& c)
++inline bool segIntersect()
++void intersectionPoint();
++bool ptInPolygon();
++void insert();
++double nearestNeighborDistance();
++double getNearestInCell();
++void removePointsInPolygon();
++void removePointsInScanBoundry();
++bool ptInScan();
++void getPoints();
+-- private data --
+-double resolution_;
+-geometry_msgs::Point origin_;
+-unsigned int width_;
+-unsigned int height_;
+-std::vector< std::list<geometry_msgs::Point32> > cells_;
+-double max_z_;
+-double sq_obstacle_range_;
+-double sq_min_separation_;
+-std::vector< std::list<geometry_msgs::Point32>* > points_;
+}
+
+class PreferForwardCostFunction{
+-- public method --
++PreferForwardCostFunction(double penalty)
++~PreferForwardCostFunction() {}
++double scoreTrajectory(Trajectory &traj);
++bool prepare()
++void setPenalty(double penalty)
+
+-- private data --
+-double penalty_;
+}
+
+class TrajectorySearch {
+public:
++virtual bool findBestTrajectory() = 0;
++virtual ~TrajectorySearch()
+-- protected method --
+#TrajectorySearch()
+}
+
+class TrajectorySampleGenerator {
+-- public method --
++virtual bool hasMoreTrajectories() = 0;
++virtual bool nextTrajectory(Trajectory &traj) = 0;
++virtual ~TrajectorySampleGenerator()
+-- protected method --
+#TrajectorySampleGenerator()
+}
+
+class SimpleTrajectoryGenerator{
+-- public method --
++SimpleTrajectoryGenerator()
++~SimpleTrajectoryGenerator()
++void initialise();
++void initialise();
++void setParameters();
++bool hasMoreTrajectories();
++bool nextTrajectory(Trajectory &traj);
++static Eigen::Vector3f computeNewPositions();
++static Eigen::Vector3f computeNewVelocities();
++bool generateTrajectory();
+-- protected data --
+#unsigned int next_sample_index_;
+#std::vector<Eigen::Vector3f> sample_params_;
+#base_local_planner::LocalPlannerLimits* limits_;
+#Eigen::Vector3f pos_;
+#Eigen::Vector3f vel_;
+#bool continued_acceleration_;
+#bool discretize_by_time_;
+#double sim_time_, sim_granularity_, angular_sim_granularity_;
+#bool use_dwa_;
+#double sim_period_; // only for dwa
+}
+
+class SimpleScoredSamplingPlanner{
+-- public method --
++~SimpleScoredSamplingPlanner()
++SimpleScoredSamplingPlanner()
++SimpleScoredSamplingPlanner(gen_list,critics, max_samples);
++double scoreTrajectory(Trajectory& traj, double best_traj_cost);
++bool findBestTrajectory(Trajectory& traj, std::vector<Trajectory>* all_explored = 0);
+-- private data --
+-std::vector<TrajectorySampleGenerator*> gen_list_;
+-std::vector<TrajectoryCostFunction*> critics_;
+-int max_samples_;
+}
+
+class Trajectory {
+-- public method --
++Trajectory();
++Trajectory(xv, yv, thetav, time_delta, num_pts);
++void getPoint(index, x, y, th) const;
++void setPoint(index, x, y, th);
++void addPoint(x, y, th);
++void getEndpoint(x, y, th) const;
++void resetPoints();
++unsigned int getPointsSize() const;
+
+-- public data --
++double xv_, yv_, thetav_;
++double cost_;
++double time_delta_;
+-- private data --
+-std::vector<double> x_pts_;
+-std::vector<double> y_pts_;
+-std::vector<double> th_pts_;
+}
+
+class TwirlingCostFunction{
+-- public method --
++TwirlingCostFunction()
++~TwirlingCostFunction()
++double scoreTrajectory(Trajectory &traj);
++bool prepare()
+}
+
+class VelocityIterator {
+  public:
++VelocityIterator( min, max, num_samples)
++double getVelocity()
++VelocityIterator& operator++(int)
++void reset()
++bool isFinished()
+-- private method --
+-std::vector<double> samples_;
+-unsigned int current_index;
+}
+
+
+class VoxelGridModel{
+-- public method --
++VoxelGridModel();
++virtual ~VoxelGridModel()
++virtual double footprintCost();
++void updateWorld();
++void getPoints(sensor_msgs::PointCloud2& cloud);
+-- private method --
+-double lineCost();
+-double pointCost(int x, int y);
+-void removePointsInScanBoundry();
+-inline bool worldToMap3D()
+-inline bool worldToMap2D()
+-inline void mapToWorld3D()
+-inline void mapToWorld2D()
+-inline double dist()
+-inline void insert()
+-- private data --
+-voxel_grid::VoxelGrid obstacle_grid_;
+-double xy_resolution_;
+-double z_resolution_;
+-double origin_x_;
+-double origin_y_;
+-double origin_z_;
+-double max_z_;  /
+-double sq_obstacle_range_;
+}
+class BaseLocalPlanner{
+}
+class TrajectoryPlannerROS{
+-- public method --
++TrajectoryPlannerROS();
++TrajectoryPlannerROS(name,tf,costmap_ros);
++void initialize(name, tf, costmap_ros);
++~TrajectoryPlannerROS();
++bool computeVelocityCommands(cmd_vel);
++bool setPlan(orig_global_plan);
++bool isGoalReached();
++bool checkTrajectory(vx_samp, vy_samp, vtheta_samp, update_map);
++double scoreTrajectory(vx_samp, vy_samp, vtheta_samp, update_map);
++bool isInitialized()
++TrajectoryPlanner* getPlanner() const
+-- private method --
+-void reconfigureCB(BaseLocalPlannerConfig &config, uint32_t level);
+-bool rotateToGoal();
+-bool stopWithAccLimits();
+-std::vector<double> loadYVels();
+-double sign(double x)
+-- private data --
+-WorldModel* world_model_;
+-TrajectoryPlanner* tc_;
+-costmap_2d::Costmap2DROS* costmap_ros_;
+-costmap_2d::Costmap2D* costmap_;
+-MapGridVisualizer map_viz_;
+-tf2_ros::Buffer* tf_; /
+-std::string global_frame_;
+-double max_sensor_range_;
+-nav_msgs::Odometry base_odom_;
+-std::string robot_base_frame_;
+-double rot_stopped_velocity_, trans_stopped_velocity_;
+-double xy_goal_tolerance_, yaw_goal_tolerance_, min_in_place_vel_th_;
+-std::vector<geometry_msgs::PoseStamped> global_plan_;
+-bool prune_plan_;
+-boost::recursive_mutex odom_lock_;
+-double max_vel_th_, min_vel_th_;
+-double acc_lim_x_, acc_lim_y_, acc_lim_theta_;
+-double sim_period_;
+-bool rotating_to_goal_;
+-bool reached_goal_;
+-bool latch_xy_goal_tolerance_, xy_tolerance_latch_;
+-ros::Publisher g_plan_pub_, l_plan_pub_;
+-dynamic_reconfigure::Server<BaseLocalPlannerConfig> *dsrv_;
+-base_local_planner::BaseLocalPlannerConfig default_config_;
+-bool setup_;
+-bool initialized_;
+-base_local_planner::OdometryHelperRos odom_helper_;
+-std::vector<geometry_msgs::Point> footprint_spec_;
+}
+
+class TrajectoryPlanner{
+-- public method --
++TrajectoryPlanner();
++~TrajectoryPlanner();
++void reconfigure(BaseLocalPlannerConfig &cfg);
++Trajectory findBestPath(global_pose,global_vel,drive_velocities);
++void updatePlan(new_plan, compute_dists);
++void getLocalGoal(double& x, double& y);
++bool checkTrajectory();
++double scoreTrajectory();
++bool getCellCosts();
++void setFootprint(footprint )
++geometry_msgs::Polygon getFootprintPolygon() const
++std::vector<geometry_msgs::Point> getFootprint() const
+-- private method --
+-Trajectory createTrajectories();
+-void generateTrajectory();
+-double footprintCost();
+-inline double computeNewXPosition()
+-inline double computeNewYPosition()
+-inline double computeNewThetaPosition()
+-inline double computeNewVelocity()
+-void getMaxSpeedToStopInTime()
+-double lineCost();
+-double pointCost();
+-double headingDiff();
+-- private data --
+-base_local_planner::FootprintHelper footprint_helper_;
+-MapGrid path_map_;
+-MapGrid goal_map_;
+-const costmap_2d::Costmap2D& costmap_;
+-WorldModel& world_model_;
+-std::vector<geometry_msgs::Point> footprint_spec_;
+-std::vector<geometry_msgs::PoseStamped> global_plan_;
+-bool stuck_left, stuck_right;
+-bool rotating_left, rotating_right;
+-bool stuck_left_strafe, stuck_right_strafe;
+-bool strafe_right, strafe_left;
+-bool escaping_;
+-bool meter_scoring_;
+-double goal_x_,goal_y_;
+-double final_goal_x_, final_goal_y_;
+-bool final_goal_position_valid_;
+-double sim_time_;
+-double sim_granularity_;
+-double angular_sim_granularity_;
+-int vx_samples_;
+-int vtheta_samples_;
+-double pdist_scale_, gdist_scale_, occdist_scale_;
+-double acc_lim_x_, acc_lim_y_, acc_lim_theta_;
+-double prev_x_, prev_y_;
+-double escape_x_, escape_y_, escape_theta_;
+-Trajectory traj_one, traj_two;
+-double heading_lookahead_;
+-double oscillation_reset_dist_;
+-double escape_reset_dist_, escape_reset_theta_;
+-bool holonomic_robot_;
+-double max_vel_x_, min_vel_x_, max_vel_th_, min_vel_th_, min_in_place_vel_th_;
+-double backup_vel_;
+-bool dwa_;
+-bool heading_scoring_;
+-double heading_scoring_timestep_;
+-bool simple_attractor_;
+-std::vector<double> y_vels_;
+-double stop_time_buffer_;
+-double sim_period_;
+-double inscribed_radius_, circumscribed_radius_;
+-boost::mutex configuration_mutex_;
+
+}
+
+
+class DWAPlanner {
+-- public method --
++DWAPlanner(name,planner_util);
++void reconfigure(DWAPlannerConfig &cfg);
++bool checkTrajectory(pos,vel,vel_samples);
++base_local_planner::Trajectory findBestPath(global_pose,global_vel,drive_velocities);
++void updatePlanAndLocalCosts(global_pose,new_plan,footprint_spec);
++double getSimPeriod()
++bool getCellCosts(cx, cy, path_cost, goal_cost, occ_cost, total_cost);
++bool setPlan(orig_global_plan);
+
+-- private data --
+-base_local_planner::LocalPlannerUtil *planner_util_;
+-double stop_time_buffer_;
+-double pdist_scale_, gdist_scale_, occdist_scale_;
+-Eigen::Vector3f vsamples_;
+-double sim_period_;
+-base_local_planner::Trajectory result_traj_;
+-double forward_point_distance_;
+-std::vector<geometry_msgs::PoseStamped> global_plan_;
+-boost::mutex configuration_mutex_;
+-std::string frame_id_;
+-ros::Publisher traj_cloud_pub_;
+-bool publish_cost_grid_pc_;
+-bool publish_traj_pc_;
+-double cheat_factor_;
+-base_local_planner::MapGridVisualizer map_viz_;
+-base_local_planner::SimpleTrajectoryGenerator generator_;
+-base_local_planner::OscillationCostFunction oscillation_costs_;
+-base_local_planner::ObstacleCostFunction obstacle_costs_;
+-base_local_planner::MapGridCostFunction path_costs_;
+-base_local_planner::MapGridCostFunction goal_costs_;
+-base_local_planner::MapGridCostFunction goal_front_costs_;
+-base_local_planner::MapGridCostFunction alignment_costs_;
+-base_local_planner::TwirlingCostFunction twirling_costs_;
+-base_local_planner::SimpleScoredSamplingPlanner scored_sampling_planner_;
+}
+
+class DWAPlannerROS{
+-- public method --
++DWAPlannerROS();
++void initialize(name,tf,costmap_ros);
++~DWAPlannerROS();
++bool computeVelocityCommands(geometry_msgs::Twist& cmd_vel);
++bool dwaComputeVelocityCommands(global_pose,cmd_vel);
++bool setPlan(orig_global_plan);
++bool isGoalReached();
++bool isInitialized()
+-- private method --
+void reconfigureCB(DWAPlannerConfig &config, uint32_t level);
+void publishLocalPlan(std::vector<geometry_msgs::PoseStamped>& path);
+void publishGlobalPlan(std::vector<geometry_msgs::PoseStamped>& path);
+
+-- private data --
+tf2_ros::Buffer* tf_;
+ros::Publisher g_plan_pub_, l_plan_pub_;
+base_local_planner::LocalPlannerUtil planner_util_;
+boost::shared_ptr<DWAPlanner> dp_;
+costmap_2d::Costmap2DROS* costmap_ros_;
+dynamic_reconfigure::Server<DWAPlannerConfig> *dsrv_;
+dwa_local_planner::DWAPlannerConfig default_config_;
+bool setup_;
+geometry_msgs::PoseStamped current_pose_;
+base_local_planner::LatchedStopRotateController latchedStopRotateController_;
+bool initialized_;
+base_local_planner::OdometryHelperRos odom_helper_;
+std::string odom_topic_;
+}
+
+
+WorldModel <|-- CostmapModel
+WorldModel <|-- PointGrid
+WorldModel <|-- VoxelGridModel
+CostmapModel *-- Costmap2D
+
+
+LocalPlannerUtil *-- Costmap2D
+MapGrid *-- MapCell
+TrajectoryCostFunction <|-- ObstacleCostFunction
+ObstacleCostFunction *-- Costmap2D
+TrajectoryCostFunction <|-- MapGridCostFunction
+MapGridCostFunction *-- Costmap2D
+MapGridCostFunction *-- MapGrid
+TrajectoryCostFunction <|-- OscillationCostFunction
+
+TrajectoryCostFunction <|-- PreferForwardCostFunction
+
+TrajectorySampleGenerator <|-- SimpleTrajectoryGenerator
+SimpleTrajectoryGenerator *-- LocalPlannerLimits
+
+TrajectorySearch <|-- SimpleScoredSamplingPlanner
+SimpleScoredSamplingPlanner *-- TrajectorySampleGenerator
+SimpleScoredSamplingPlanner *-- TrajectoryCostFunction
+
+TrajectoryCostFunction <|-- TwirlingCostFunction
+
+BaseLocalPlanner <|-- TrajectoryPlannerROS
+TrajectoryPlannerROS *-- WorldModel
+TrajectoryPlannerROS *-- Costmap2D
+TrajectoryPlannerROS *-- TrajectoryPlanner
+
+TrajectoryPlanner *-- MapGrid
+TrajectoryPlanner *-- Costmap2D
+TrajectoryPlanner *-- WorldModel
+
+
+
+BaseLocalPlanner <|-- DWAPlannerROS
+DWAPlannerROS *-- DWAPlanner
+
+DWAPlanner *-- LocalPlannerUtil
+DWAPlanner *-- SimpleTrajectoryGenerator
+DWAPlanner *-- OscillationCostFunction
+DWAPlanner *-- ObstacleCostFunction
+DWAPlanner *-- MapGridCostFunction
+DWAPlanner *-- TwirlingCostFunction
+DWAPlanner *-- SimpleScoredSamplingPlanner
+
+
+@enduml
