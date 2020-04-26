@@ -1,0 +1,47 @@
+@startuml
+Title "dwb plugins" 类图
+class KinematicParameters
+{
+}
+
+class GoalChecker
+
+class SimpleGoalChecker
+{
+}
+
+class StoppedGoalChecker
+{
+}
+
+
+class VelocityIterator
+{
+}
+
+class OneDVelocityIterator
+{
+}
+class XYThetaIterator
+{
+}
+
+class TrajectoryGenerator
+
+class StandardTrajectoryGenerator
+{
+}
+
+class LimitedAccelGenerator
+{
+}
+
+XYThetaIterator *-- KinematicParameters
+XYThetaIterator *-- OneDVelocityIterator
+VelocityIterator <|-- XYThetaIterator
+GoalChecker <|-- SimpleGoalChecker
+SimpleGoalChecker <|-- StoppedGoalChecker
+TrajectoryGenerator <|-- StandardTrajectoryGenerator
+StandardTrajectoryGenerator <|-- LimitedAccelGenerator
+
+@enduml

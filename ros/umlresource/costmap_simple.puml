@@ -1,0 +1,65 @@
+@startuml
+Title "costmap2d类图"
+
+
+class Costmap2D{
+}
+
+class Layer{
+
+}
+
+class CostmapLayer{
+}
+
+
+class LayeredCostmap{
+}
+
+class Observation{
+}
+class ObservationBuffer{
+}
+class ObstacleLayer{
+}
+class StaticLayer{
+}
+class VoxelLayer{
+}
+class InflationLayer
+{
+}
+
+
+
+class Costmap2DPublisher
+{
+}
+
+class Costmap2DROS
+{
+}
+
+
+
+Costmap2DROS *-- Costmap2DPublisher
+Costmap2DROS *-- LayeredCostmap
+Costmap2DPublisher *-- Costmap2D
+Layer *-- LayeredCostmap
+LayeredCostmap *-- InflationLayer
+LayeredCostmap *-- ObstacleLayer
+LayeredCostmap *-- StaticLayer
+LayeredCostmap *-- VoxelLayer
+
+ObstacleLayer *-- ObservationBuffer
+ObservationBuffer *-- Observation
+Layer <|-- InflationLayer
+
+CostmapLayer <|-- StaticLayer
+Costmap2D <|-- CostmapLayer
+Layer <|-- CostmapLayer
+CostmapLayer <|-- ObstacleLayer
+ObstacleLayer <|-- VoxelLayer
+
+
+@enduml

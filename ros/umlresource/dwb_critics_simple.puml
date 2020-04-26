@@ -1,0 +1,83 @@
+@startuml
+Title "dwb critics class map"
+
+class TrajectoryCritic
+
+class BaseObstacleCritic
+{
+}
+
+class MapGridCritic
+{
+}
+
+class CostmapQueue
+
+class MapGridQueue
+{
+
+}
+
+
+class GoalDistCritic
+{
+
+}
+
+class GoalAlignCritic
+{
+}
+
+class ObstacleFootprintCritic
+{
+}
+
+
+
+class OscillationCritic
+{
+}
+
+
+class CommandTrend
+{
+}
+
+class PathAlignCritic
+{
+}
+
+class PathDistCritic
+{
+}
+
+
+class PreferForwardCritic
+{
+}
+
+class RotateToGoalCritic
+{
+}
+
+
+class TwirlingCritic
+{
+}
+
+OscillationCritic +-- CommandTrend
+MapGridCritic +-- MapGridQueue
+CostmapQueue <|-- MapGridQueue
+TrajectoryCritic <|-- BaseObstacleCritic
+TrajectoryCritic <|-- MapGridCritic
+MapGridCritic <|--  GoalDistCritic
+GoalDistCritic <|-- GoalAlignCritic
+BaseObstacleCritic <|-- ObstacleFootprintCritic
+TrajectoryCritic <|-- OscillationCritic
+PathDistCritic <|-- PathAlignCritic
+MapGridCritic <|-- PathDistCritic
+TrajectoryCritic <|-- PreferForwardCritic
+TrajectoryCritic <|-- RotateToGoalCritic
+TrajectoryCritic <|-- TwirlingCritic
+
+@enduml

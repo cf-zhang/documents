@@ -1,0 +1,48 @@
+@startuml
+Title "local_planner类图"
+class LocalPlanner{
+}
+
+class DWBLocalPlanner
+{
+}
+
+class DebugDWBLocalPlanner
+{
+}
+
+class GoalChecker
+{
+}
+
+
+class IllegalTrajectoryTracker
+{
+}
+
+class NoLegalTrajectoriesException{
+}
+
+class DWBPublisher
+{
+}
+
+class TrajectoryCritic
+{
+}
+
+class TrajectoryGenerator
+{
+}
+
+NoLegalTrajectoriesException *-- IllegalTrajectoryTracker
+LocalPlanner *-- GoalChecker
+LocalPlanner *-- DWBPublisher
+LocalPlanner *-- TrajectoryCritic
+LocalPlanner *-- TrajectoryGenerator
+DWBLocalPlanner <|-- DebugDWBLocalPlanner
+LocalPlanner <|-- DWBLocalPlanner
+
+@enduml
+
+

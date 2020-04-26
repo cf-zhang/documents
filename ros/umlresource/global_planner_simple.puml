@@ -1,0 +1,61 @@
+@startuml
+
+Title "globalplanner类图"
+
+class GlobalPlanner{
+}
+
+class DluxGlobalPlanner{
+}
+
+class CostInterpreter{
+}
+
+class PotentialCalculator{
+}
+class CostMap
+class Traceback{
+}
+
+class AStar{
+}
+
+class Dijkstra{
+}
+
+class GradientPath{
+}
+
+class GridPath{
+}
+class VonNeumannPath{
+}
+
+class NavGridInfo{
+}
+
+class NavGrid << T >>
+{
+}
+
+class VectorNavGrid <<NavGrid>>
+{
+}
+
+NavGrid *-- NavGridInfo
+NavGrid <|-- VectorNavGrid
+
+
+GlobalPlanner <|-- DluxGlobalPlanner
+DluxGlobalPlanner *-- CostInterpreter
+DluxGlobalPlanner *-- CostMap
+DluxGlobalPlanner *-- VectorNavGrid
+PotentialCalculator *-- CostInterpreter
+Traceback *-- CostInterpreter
+PotentialCalculator <|-- AStar
+PotentialCalculator <|-- Dijkstra
+Traceback <|-- GradientPath
+Traceback <|-- GridPath
+Traceback <|-- VonNeumannPath
+
+@enduml
