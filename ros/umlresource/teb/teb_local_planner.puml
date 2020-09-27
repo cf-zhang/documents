@@ -1,0 +1,116 @@
+@startuml
+Title "costmap2d类图"
+
+class EquivalenceClass
+{
+-- public method --
+   +EquivalenceClass()
+   +virtual ~EquivalenceClass()
+   +virtual bool isEqual(const EquivalenceClass& other) const = 0;
+   +virtual bool isValid() const = 0;
+   +virtual bool isReasonable() const = 0;
+}
+
+
+
+class PoseSE2
+{
+-- public method --
+  +PoseSE2()
+  +PoseSE2(const Eigen::Ref<const Eigen::Vector2d>& position, double theta)
+  +PoseSE2(double x, double y, double theta)
+  +PoseSE2(const geometry_msgs::Pose& pose)
+  +PoseSE2(const tf::Pose& pose)
+  +PoseSE2(const PoseSE2& pose)
+  +~PoseSE2()
+  +Eigen::Vector2d& position()
+  +const Eigen::Vector2d& position() const
+  +double& x()
+  +const double& x() const
+  +double& y()
+  +const double& y() const
+  +double& theta()
+  +const double& theta() const
+  +void setZero()
+  +void toPoseMsg(geometry_msgs::Pose& pose) const
+  +Eigen::Vector2d orientationUnitVec() const
+  +void scale(double factor)
+  +void plus(const double* pose_as_array)
+  +void averageInPlace(const PoseSE2& pose1, const PoseSE2& pose2)
+  +static PoseSE2 average(const PoseSE2& pose1, const PoseSE2& pose2)
+  +void rotateGlobal(double angle, bool adjust_theta=true)
+  +PoseSE2& operator=( const PoseSE2& rhs )
+  +PoseSE2& operator+=(const PoseSE2& rhs)
+  +friend PoseSE2 operator+(PoseSE2 lhs, const PoseSE2& rhs)
+  +PoseSE2& operator-=(const PoseSE2& rhs)
+  +friend PoseSE2 operator-(PoseSE2 lhs, const PoseSE2& rhs)
+  +friend PoseSE2 operator*(PoseSE2 pose, double scalar)
+  +friend PoseSE2 operator*(double scalar, PoseSE2 pose)
+  +friend std::ostream& operator<< (std::ostream& stream, const PoseSE2& pose)
+-- private data --
+  -Eigen::Vector2d _position;
+  -double _theta;
+
+}
+
+
+
+class HSignature
+{
+-- public method --
+  +HSignature(const TebConfig& cfg);
+  +void calculateHSignature()
+  +virtual bool isValid() const;
+  +virtual bool isReasonable() const;
+  +const std::complex<long double>& value() const;
+-- private  data --
+  -const TebConfig* cfg_;
+  -std::complex<long double> hsignature_;
+}
+
+class HSignature3d
+{
+--public method --
+  +HSignature3d(const TebConfig& cfg);
+  +void calculateHSignature();
+  +virtual bool isEqual(const EquivalenceClass& other) const;
+  +virtual bool isValid() const;
+  +virtual bool isReasonable() const;
+  +const std::vector<double>& values() const;
+-- private data --
+  -const TebConfig* cfg_;
+  -std::vector<double> hsignature3d_;
+}
+
+
+
+EquivalenceClass <|-- HSignature
+EquivalenceClass <|-- HSignature3d
+
+
+
+
+
+
+
+Costmap2DROS *-- Costmap2DPublisher
+Costmap2DROS *-- LayeredCostmap
+Costmap2DPublisher *-- Costmap2D
+Layer *-- LayeredCostmap
+LayeredCostmap *-- InflationLayer
+LayeredCostmap *-- ObstacleLayer
+LayeredCostmap *-- StaticLayer
+LayeredCostmap *-- VoxelLayer
+
+ObstacleLayer *-- ObservationBuffer
+ObservationBuffer *-- Observation
+Layer <|-- InflationLayer
+
+CostmapLayer <|-- StaticLayer
+Costmap2D <|-- CostmapLayer
+Layer <|-- CostmapLayer
+CostmapLayer <|-- ObstacleLayer
+ObstacleLayer <|-- VoxelLayer
+
+
+@enduml
