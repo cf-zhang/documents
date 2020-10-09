@@ -84,10 +84,53 @@ class HSignature3d
 
 
 
+class Trajectory
+class Robot
+class GoalTolerance
+class Obstacles
+class Optimization
+class HomotopyClasses
+class Recovery
+
+class TebConfig
+{
+--public data --
+  +std::string odom_topic;
+  +std::string map_frame;
+  +Recovery recovery
+  +Trajectory trajectory
+  +Robot robot
+  +GoalTolerance goal_tolerance
+  +Obstacles　obstacles
+  +HomotopyClasses homotopyclasses
+  +Optimization optim
+-- public method --
+  +TebConfig()
+  +void loadRosParamFromNodeHandle(const ros::NodeHandle& nh);
+  +void reconfigure(KinematicParamsConfig& cfg);
+  +void checkParameters() const;
+  +void checkDeprecated(const ros::NodeHandle& nh) const;
+  +boost::mutex& configMutex()
+-- private date --
+  -boost::mutex config_mutex_;
+
+}
+
+
+
+
+
 EquivalenceClass <|-- HSignature
 EquivalenceClass <|-- HSignature3d
 
 
+TebConfig *-- Recovery
+TebConfig *-- Trajectory
+TebConfig *-- Robot
+TebConfig *-- GoalTolerance
+TebConfig *-- Obstacles
+TebConfig *-- HomotopyClasses
+TebConfig *-- Optimization
 
 
 

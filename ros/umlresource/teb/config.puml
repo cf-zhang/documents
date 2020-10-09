@@ -1,0 +1,186 @@
+@startuml
+Title "costmap2d类图"
+
+
+class Trajectory
+{
+double teb_autosize;
+double dt_ref;
+double dt_hysteresis;
+int min_samples;
+int max_samples;
+bool global_plan_overwrite_orientation;
+bool allow_init_with_backwards_motion;
+double global_plan_viapoint_sep;
+bool via_points_ordered;
+double max_global_plan_lookahead_dist;
+double global_plan_prune_distance;
+bool exact_arc_length;
+double force_reinit_new_goal_angular;
+int feasibility_check_no_poses;
+bool publish_feedback;
+double min_resolution_collision_check_angular;
+int control_look_ahead_poses;
+double control_dt;
+double pred_comp_ratio;
+double pred_comp_ratio_omega;
+double comp_ratio_omega;
+bool use_accurate_control;
+}
+
+
+class Robot
+{
+double max_vel_x;
+double max_vel_x_backwards;
+double max_vel_y;
+double max_vel_theta;
+double acc_lim_x;
+double acc_lim_y;
+double acc_lim_theta;
+double min_turning_radius;
+double wheelbase;
+bool cmd_angle_instead_rotvel;
+bool is_footprint_dynamic;
+bool is_soft_limit;
+}
+
+
+class GoalTolerance
+{
+double yaw_goal_tolerance;
+double xy_goal_tolerance;
+bool free_goal_vel;
+bool complete_global_plan;
+}
+
+
+class Obstacles
+{
+double min_obstacle_dist
+double inflation_dist
+double dynamic_obstacle_inflation_dist;
+bool include_dynamic_obstacles;
+bool include_costmap_obstacles;
+double costmap_obstacles_behind_robot_dist;
+int obstacle_poses_affected;
+bool legacy_obstacle_association;
+double obstacle_association_force_inclusion_factor
+double obstacle_association_cutoff_factor
+std::string costmap_converter_plugin
+bool costmap_converter_spin_thread
+int costmap_converter_rate;
+}
+
+class Optimization
+{
+int no_inner_iterations;
+int no_outer_iterations;
+bool optimization_activate;
+bool optimization_verbose;
+double penalty_epsilon;
+double weight_max_vel_x;
+double weight_max_vel_y;
+double weight_max_vel_theta;
+double weight_acc_lim_x;
+double weight_acc_lim_y;
+double weight_acc_lim_theta;
+double weight_kinematics_nh;
+double weight_kinematics_forward_drive;
+double weight_kinematics_turning_radius;
+double weight_optimaltime;
+double weight_shortest_path;
+double weight_obstacle;
+double weight_inflation;
+double weight_dynamic_obstacle;
+double weight_dynamic_obstacle_inflation;
+double weight_viapoint;
+double weight_prefer_rotdir;
+double weight_adapt_factor;
+double obstacle_cost_exponent;
+double valid_cost_thresh;
+}
+
+
+class HomotopyClasses
+{
+bool enable_homotopy_class_planning;
+bool enable_multithreading;
+bool simple_exploration;
+int max_number_classes;
+double selection_cost_hysteresis;
+double selection_prefer_initial_plan;
+double selection_obst_cost_scale;
+double selection_viapoint_cost_scale;
+bool selection_alternative_time_cost;
+double switching_blocking_period;
+int roadmap_graph_no_samples;
+double roadmap_graph_area_width;
+double roadmap_graph_area_length_scale;
+double h_signature_prescaler;
+double h_signature_threshold;
+double obstacle_keypoint_offset;
+double obstacle_heading_threshold;
+bool viapoints_all_candidates;
+bool visualize_hc_graph;
+double visualize_with_time_as_z_axis_scale;
+bool delete_detours_backwards;
+double detours_orientation_tolerance;
+double length_start_orientation_vector;
+double max_ratio_detours_duration_best_duration;
+}
+
+class Recovery
+{
+--public data --
++bool shrink_horizon_backup;
++double shrink_horizon_min_duration;
++bool oscillation_recovery;
++double oscillation_v_eps;
++double oscillation_omega_eps;
++double oscillation_recovery_min_duration;
++double oscillation_filter_duration;
+}
+
+
+
+class TebConfig
+{
+--public data --
+  +std::string odom_topic;
+  +std::string map_frame;
+  +Recovery recovery
+  +Trajectory trajectory
+  +Robot robot
+  +GoalTolerance goal_tolerance
+  +Obstacles　obstacles
+  +HomotopyClasses homotopyclasses
+  +Optimization optim
+-- public method --
+  +TebConfig()
+  +void loadRosParamFromNodeHandle(const ros::NodeHandle& nh);
+  +void reconfigure(KinematicParamsConfig& cfg);
+  +void checkParameters() const;
+  +void checkDeprecated(const ros::NodeHandle& nh) const;
+  +boost::mutex& configMutex()
+-- private date --
+  -boost::mutex config_mutex_;
+
+}
+
+
+
+
+
+TebConfig *-- Recovery
+TebConfig *-- Trajectory
+TebConfig *-- Robot
+TebConfig *-- GoalTolerance
+TebConfig *-- Obstacles
+TebConfig *-- HomotopyClasses
+TebConfig *-- Optimization
+
+
+
+
+@enduml
