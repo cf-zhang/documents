@@ -1,0 +1,44 @@
+@startuml
+
+
+class EquivalenceClass
+{
+-- public method --
+   +EquivalenceClass()
+   +virtual ~EquivalenceClass()
+   +virtual bool isEqual(const EquivalenceClass& other) const = 0;
+   +virtual bool isValid() const = 0;
+   +virtual bool isReasonable() const = 0;
+}
+
+
+
+class HSignature
+{
+-- public method --
+  +HSignature(const TebConfig& cfg);
+  +void calculateHSignature()
+  +virtual bool isValid() const;
+  +virtual bool isReasonable() const;
+  +const std::complex<long double>& value() const;
+-- private  data --
+  -const TebConfig* cfg_;
+  -std::complex<long double> hsignature_;
+}
+
+class HSignature3d
+{
+--public method --
+  +HSignature3d(const TebConfig& cfg);
+  +void calculateHSignature();
+  +virtual bool isEqual(const EquivalenceClass& other) const;
+  +virtual bool isValid() const;
+  +virtual bool isReasonable() const;
+  +const std::vector<double>& values() const;
+-- private data --
+  -const TebConfig* cfg_;
+  -std::vector<double> hsignature3d_;
+}
+
+
+@enduml

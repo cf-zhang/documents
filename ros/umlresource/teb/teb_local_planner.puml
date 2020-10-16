@@ -1,18 +1,6 @@
+
 @startuml
-Title "costmap2d类图"
-
-class EquivalenceClass
-{
--- public method --
-   +EquivalenceClass()
-   +virtual ~EquivalenceClass()
-   +virtual bool isEqual(const EquivalenceClass& other) const = 0;
-   +virtual bool isValid() const = 0;
-   +virtual bool isReasonable() const = 0;
-}
-
-
-
+Title "teb_local_planner类图"
 class PoseSE2
 {
 -- public method --
@@ -54,33 +42,103 @@ class PoseSE2
 }
 
 
+class HomotopyClassPlanner
 
-class HSignature
+
+class GraphSearchInterface
 {
 -- public method --
-  +HSignature(const TebConfig& cfg);
-  +void calculateHSignature()
-  +virtual bool isValid() const;
-  +virtual bool isReasonable() const;
-  +const std::complex<long double>& value() const;
--- private  data --
-  -const TebConfig* cfg_;
-  -std::complex<long double> hsignature_;
++virtual void createGraph()
++void clearGraph()
+
+-- public data --
++HcGraph graph_
+
+-- protected method --
+#GraphSearchInterface()
+#void DepthFirst()
+-- protected data --
+#const TebConfig* cfg_
+#HomotopyClassPlanner* const hcp_
 }
 
-class HSignature3d
+
+class lrKeyPointGraph
 {
---public method --
-  +HSignature3d(const TebConfig& cfg);
-  +void calculateHSignature();
-  +virtual bool isEqual(const EquivalenceClass& other) const;
-  +virtual bool isValid() const;
-  +virtual bool isReasonable() const;
-  +const std::vector<double>& values() const;
--- private data --
-  -const TebConfig* cfg_;
-  -std::vector<double> hsignature3d_;
+-- public method --
++lrKeyPointGraph()
++virtual ~lrKeyPointGraph()
++virtual void createGraph();
 }
+
+
+class ProbRoadmapGraph
+{
+-- public method --
++ProbRoadmapGraph()
++virtual ~ProbRoadmapGraph()
++virtual void createGraph()
+--private data  --
+-boost::random::mt19937 rnd_generator_;
+}
+
+GraphSearchInterface *-- HomotopyClassPlanner
+GraphSearchInterface *-- TebConfig
+GraphSearchInterface <|-- lrKeyPointGraph
+GraphSearchInterface <|-- ProbRoadmapGraph
+
+
+class VelMeasurement
+{
+-- public data --
++double v = 0;
++double omega = 0;
+}
+class FailureDetector
+{
+-- public method --
++FailureDetector()
++~FailureDetector()
++void setBufferLength(int length)
++void update();
++bool isOscillating() const;
++void clear();
+-- protected method --
+#bool detect(double v_eps, double omega_eps);
+-- private data --
+-boost::circular_buffer<VelMeasurement> buffer_
+-bool oscillating_
+
+}
+
+FailureDetector *-- VelMeasurement
+
+
+
+
+
+
+
+
+
+
+
+
+
+class HSignature
+class HSignature3d
+class EquivalenceClass
+{
+-- public method --
+   +EquivalenceClass()
+   +virtual ~EquivalenceClass()
+   +virtual bool isEqual(const EquivalenceClass& other) const = 0;
+   +virtual bool isValid() const = 0;
+   +virtual bool isReasonable() const = 0;
+}
+
+EquivalenceClass <|-- HSignature
+EquivalenceClass <|-- HSignature3d
 
 
 
@@ -116,14 +174,6 @@ class TebConfig
 
 }
 
-
-
-
-
-EquivalenceClass <|-- HSignature
-EquivalenceClass <|-- HSignature3d
-
-
 TebConfig *-- Recovery
 TebConfig *-- Trajectory
 TebConfig *-- Robot
@@ -133,27 +183,46 @@ TebConfig *-- HomotopyClasses
 TebConfig *-- Optimization
 
 
+class TebOptimalPlanner
+
+class TebVisualization
+{
+--public method--
++TebVisualization();
++TebVisualization(ros::NodeHandle& nh, const TebConfig& cfg)
++void initialize(ros::NodeHandle& nh, const TebConfig& cfg);
++void publishGlobalPlan(global_plan) const;
++void publishLocalPlan(local_plan)
++void publishLocalPlanAndPoses(const TimedElasticBand& teb)
++void publishRobotFootprintModel(current_pose, robot_model, ns,color)
++void publishInfeasibleRobotPose(current_pose, robot_model)
++void publishObstacles(const ObstContainer& obstacles) const;
++void publishViaPoints(via_points, ns) const;
++void publishGraph(graph, ns);
++void publishPathContainer(first, last, ns)
++void publishTebContainer(teb_planner, ns)
++void publishFeedbackMessage(teb_planners, selected_trajectory_idx, obstacles)
++void publishFeedbackMessage(teb_planner, bstacles)
++static std_msgs::ColorRGBA toColorMsg(a,r,g,b);
+-- protected method --
+#bool printErrorWhenNotInitialized() const;
+-- protected data --
+＃ros::Publisher global_plan_pub_
+＃ros::Publisher local_plan_pub_
+＃ros::Publisher teb_poses_pub_
+＃ros::Publisher teb_marker_pub_
+＃ros::Publisher feedback_pub_
+＃const TebConfig* cfg_
+＃bool initialized_
+}
 
 
 
-Costmap2DROS *-- Costmap2DPublisher
-Costmap2DROS *-- LayeredCostmap
-Costmap2DPublisher *-- Costmap2D
-Layer *-- LayeredCostmap
-LayeredCostmap *-- InflationLayer
-LayeredCostmap *-- ObstacleLayer
-LayeredCostmap *-- StaticLayer
-LayeredCostmap *-- VoxelLayer
+TebVisualization *-- TebConfig
 
-ObstacleLayer *-- ObservationBuffer
-ObservationBuffer *-- Observation
-Layer <|-- InflationLayer
 
-CostmapLayer <|-- StaticLayer
-Costmap2D <|-- CostmapLayer
-Layer <|-- CostmapLayer
-CostmapLayer <|-- ObstacleLayer
-ObstacleLayer <|-- VoxelLayer
+
+
 
 
 @enduml
