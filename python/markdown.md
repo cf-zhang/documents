@@ -1,5 +1,50 @@
-# Markdown 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
+- [Markdown](#markdown)
+  - [Markdown 简介](#markdown-%E7%AE%80%E4%BB%8B)
+  - [Markdown 应用](#markdown-%E5%BA%94%E7%94%A8)
+  - [编辑器](#%E7%BC%96%E8%BE%91%E5%99%A8)
+  - [有用的书籍](#%E6%9C%89%E7%94%A8%E7%9A%84%E4%B9%A6%E7%B1%8D)
+  - [Markdown 标题](#markdown-%E6%A0%87%E9%A2%98)
+    - [使用 = 和 - 标记一级和二级标题](#%E4%BD%BF%E7%94%A8--%E5%92%8C---%E6%A0%87%E8%AE%B0%E4%B8%80%E7%BA%A7%E5%92%8C%E4%BA%8C%E7%BA%A7%E6%A0%87%E9%A2%98)
+    - [使用 # 号标记](#%E4%BD%BF%E7%94%A8--%E5%8F%B7%E6%A0%87%E8%AE%B0)
+  - [Markdown 段落格式](#markdown-%E6%AE%B5%E8%90%BD%E6%A0%BC%E5%BC%8F)
+    - [Markdown 段落](#markdown-%E6%AE%B5%E8%90%BD)
+    - [分隔线](#%E5%88%86%E9%9A%94%E7%BA%BF)
+    - [删除线](#%E5%88%A0%E9%99%A4%E7%BA%BF)
+    - [下划线](#%E4%B8%8B%E5%88%92%E7%BA%BF)
+    - [脚注](#%E8%84%9A%E6%B3%A8)
+  - [Markdown 列表](#markdown-%E5%88%97%E8%A1%A8)
+    - [列表嵌套](#%E5%88%97%E8%A1%A8%E5%B5%8C%E5%A5%97)
+  - [Markdown 区块](#markdown-%E5%8C%BA%E5%9D%97)
+    - [区块中使用列表](#%E5%8C%BA%E5%9D%97%E4%B8%AD%E4%BD%BF%E7%94%A8%E5%88%97%E8%A1%A8)
+    - [列表中使用区块](#%E5%88%97%E8%A1%A8%E4%B8%AD%E4%BD%BF%E7%94%A8%E5%8C%BA%E5%9D%97)
+  - [Markdown 代码](#markdown-%E4%BB%A3%E7%A0%81)
+    - [代码区块](#%E4%BB%A3%E7%A0%81%E5%8C%BA%E5%9D%97)
+  - [Markdown 链接](#markdown-%E9%93%BE%E6%8E%A5)
+    - [高级链接](#%E9%AB%98%E7%BA%A7%E9%93%BE%E6%8E%A5)
+  - [Markdown 图片](#markdown-%E5%9B%BE%E7%89%87)
+  - [Markdown 表格](#markdown-%E8%A1%A8%E6%A0%BC)
+  - [Markdown 高级技巧](#markdown-%E9%AB%98%E7%BA%A7%E6%8A%80%E5%B7%A7)
+    - [支持的 HTML 元素](#%E6%94%AF%E6%8C%81%E7%9A%84-html-%E5%85%83%E7%B4%A0)
+    - [转义](#%E8%BD%AC%E4%B9%89)
+    - [公式](#%E5%85%AC%E5%BC%8F)
+    - [画流程图、时序图(顺序图)、甘特图](#%E7%94%BB%E6%B5%81%E7%A8%8B%E5%9B%BE%E6%97%B6%E5%BA%8F%E5%9B%BE%E9%A1%BA%E5%BA%8F%E5%9B%BE%E7%94%98%E7%89%B9%E5%9B%BE)
+      - [横向流程图源码格式：](#%E6%A8%AA%E5%90%91%E6%B5%81%E7%A8%8B%E5%9B%BE%E6%BA%90%E7%A0%81%E6%A0%BC%E5%BC%8F)
+      - [竖向流程图源码格式：](#%E7%AB%96%E5%90%91%E6%B5%81%E7%A8%8B%E5%9B%BE%E6%BA%90%E7%A0%81%E6%A0%BC%E5%BC%8F)
+      - [标准流程图源码格式：](#%E6%A0%87%E5%87%86%E6%B5%81%E7%A8%8B%E5%9B%BE%E6%BA%90%E7%A0%81%E6%A0%BC%E5%BC%8F)
+      - [标准流程图源码格式（横向）：](#%E6%A0%87%E5%87%86%E6%B5%81%E7%A8%8B%E5%9B%BE%E6%BA%90%E7%A0%81%E6%A0%BC%E5%BC%8F%E6%A8%AA%E5%90%91)
+      - [UML时序图源码样例：](#uml%E6%97%B6%E5%BA%8F%E5%9B%BE%E6%BA%90%E7%A0%81%E6%A0%B7%E4%BE%8B)
+      - [UML时序图源码复杂样例：](#uml%E6%97%B6%E5%BA%8F%E5%9B%BE%E6%BA%90%E7%A0%81%E5%A4%8D%E6%9D%82%E6%A0%B7%E4%BE%8B)
+      - [UML标准时序图样例：](#uml%E6%A0%87%E5%87%86%E6%97%B6%E5%BA%8F%E5%9B%BE%E6%A0%B7%E4%BE%8B)
+      - [甘特图样例：](#%E7%94%98%E7%89%B9%E5%9B%BE%E6%A0%B7%E4%BE%8B)
+  - [目录自动生成](#%E7%9B%AE%E5%BD%95%E8%87%AA%E5%8A%A8%E7%94%9F%E6%88%90)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+# Markdown 
 ## Markdown 简介
 + Markdown 是一种轻量级标记语言，它允许人们使用易读易写的纯文本格式编写文档。+ 
 
@@ -447,3 +492,22 @@ Note right of C: 没人陪我玩
         压力测试                               :after a1  , 20h
         测试报告                               : 48h
 ```
+
+## 目录自动生成
+全局安装doctoc插件
+```
+npm i doctoc -g //install 简写 i
+```
+假如你的markdown文件在work/demo.md文件下，只需要cd work 切换到当前文件目录下，执行doctoc demo.md文件，即可在文档中自动生成目录。
+
+有可能出现如下错误：
+```
+/usr/bin/env: ‘node’: No such file or directory
+```
+通过执行如下指令进行解决：
+```
+sudo ln -s /usr/bin/nodejs /usr/bin/node
+```
+
+
+
