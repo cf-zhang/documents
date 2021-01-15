@@ -1,0 +1,423 @@
+@startuml
+class hybridParamsConfig
+class Node3D{
+-- public --
++Node3D()
++Node3D(...)
++float getX() const
++float getY() const
++float getT() const
++float getG() const
++float getH() const
++float getC() const
++int getIdx() const
++int getPrim() const
++bool isOpen() const
++bool isClosed() const
++const Node3D* getPred() const
++void setX(const float& x)
++void setY(const float& y)
++void setT(const float& t)
++void setG(const float& g)
++void setH(const float& h)
++int setIdx(int width, int height)
++void open()
++void close()
++void setPred(const Node3D* pred)
++void updateG();
++bool operator == (const Node3D& rhs) const;
++bool isInRange(const Node3D& goal) const;
++bool isOnGrid(const int width, const int height) const;
++Node3D* createSuccessor(const int i);
++static const int dir;
++static const float dx[];
++static const float dy[];
++static const float dt[];
+--  private --
+float x;
+float y;
+float t;
+float g;
+float h;
+int idx;
+bool o;
+bool c;
+int prim;
+const Node3D* pred;
+}
+
+class Node2D {
+-- public --
++Node2D()
++Node2D(...)
++int getX() const
++int getY() const
++float getG() const
++float getH() const
++float getC() const
++int getIdx() const
++bool  isOpen() const
++bool  isClosed() const
++bool  isDiscovered() const
++Node2D* getPred() const
++void setX(const int& x) { this->x = x; }
++void setY(const int& y)
++void setG(const float& g)
++void setH(const float& h)
++int setIdx(int width)
++void open()
++void close()
++void reset()
++void discover()
++void setPred(Node2D* pred)
++void updateG()
++void updateH(const Node2D& goal)
++float movementCost(const Node2D& pred) const
++bool operator == (const Node2D& rhs) const;
++bool isOnGrid(const int width, const int height) const;
++Node2D* createSuccessor(const int i);
++static const int dir;
++static const int dx[];
++static const int dy[];
+
+-- private --
+-int x;
+-int y;
+-float g;
+-float h;
+-int idx;
+-bool o;
+-bool c;
+-bool d;
+-Node2D* pred;
+}
+
+class Visualize
+class Algorithm {
+-- public --
++ Algorithm()
++ static Node3D* hybridAStar(...);
+}
+
+
+class CollisionDetection {
+-- public --
++CollisionDetection();
++void getConfiguration(const Node2D* node, float& x, float& y, float& t)
++void getConfiguration(const Node3D* node, float& x, float& y, float& t)
++template<typename T> bool isTraversable(const T* node)
++inline int getlocalindex(float query)
++float configurationCost(float x, float y, float t)
++bool configurationTest(float x, float y, float t);
++void updateGrid(map)
++void updateGridCostmap(map)
++void initLookup();
++void destroyLookup()
++Constants::config* getCollisionLookup()
+-- private --
+-nav_msgs::OccupancyGrid::Ptr grid;
+-nav_msgs::OccupancyGrid::Ptr grid_node;
+-Constants::config* collisionLookup;
+-bool initialized_;
+-std::vector<float> indices_;
+-int aspect_ratio_;
+}
+
+
+
+class Visualize{
+-- public --
++ Visualize()
++ void setNodeHandle()
++ void clear()
++ void clear2D()
++ void publishNode3DPose();
++ void publishNode3DPoses();
++ void publishNode3DCosts();
++ void publishNode2DPose();
++ void publishNode2DPoses();
++ void publishNode2DCosts();
++ void publishPlanPoses();
++ void publishCollisionCosts();
+-- private --
+- ros::NodeHandle n;
+- ros::Publisher pubNode3D;
+- ros::Publisher pubNodes3D;
+- ros::Publisher pubNodes3Dreverse;
+- ros::Publisher pubNodes3DCosts;
+- ros::Publisher pubNode2D;
+- ros::Publisher pubNodes2D;
+- ros::Publisher pubNodes2DCosts;
+- ros::Publisher pubCollisionDection;
+- geometry_msgs::PoseArray poses3D;
+- geometry_msgs::PoseArray poses3Dreverse;
+- geometry_msgs::PoseArray poses2D;
+
+}
+
+class IntPoint {
+-- public --
++IntPoint()
++IntPoint(int _x, int _y)
+----
++int x, y;
+}
+
+
+class Vector2D {
+-- public --
++inline Vector2D(const float x = 0, const float y = 0)
++inline Vector2D operator * (const float k)
++inline Vector2D operator / (const float k)
++inline Vector2D operator + (const Vector2D& b)
++inline Vector2D operator - (const Vector2D& b)
++inline Vector2D operator - ()
++friend std::ostream& operator<<(std::ostream& os, const Vector2D& b)
++float length() const
++float sqlength() const
++float dot(Vector2D b)
++inline Vector2D ort(Vector2D b)
++inline float getX()
++inline float getY()
+-- private --
++float x;
++float y;
+};
+
+class Smoother{
+-- public --
++Smoother()
++void smoothPath(DynamicVoronoi& voronoi)
++void tracePath()
++std::vector<Node3D> getPath()
++Vector2D obstacleTerm(Vector2D xi)
++Vector2D curvatureTerm()
++Vector2D smoothnessTerm();
++void appendNodeToPathBack(const Node3D& node);
++void appendNodeToPathFront(const Node3D& node);
++Vector2D voronoiTerm(Vector2D xi)
++bool isOnGrid(Vector2D vec)
++void setParam()
++void setIgnoreObstacleMask(mask)
+-- private --
+- float kappaMax;
+- float obsDMax;
+- float vorObsDMax;
+- float alpha = 0.1;
+- float wObstacle = 1;
+- float wVoronoi = 0;
+- float wCurvature = 0;
+- float wSmoothness = 5.;
+- DynamicVoronoi voronoi;
+- int width;
+- int height;
+- std::vector<Node3D> path;
+- float minRoadWidth;
+- std::vector<int> mask_;
+}
+
+
+class Path{
+-- public --
++Path(bool smoothed = false)
++void tracePath(const Node3D* node, int i = 0)
++void updatePath(std::vector<Node3D> nodePath);
++void addSegment(const Node3D& node);
++void addNode(const Node3D& node, int i);
++void addVehicle(const Node3D& node, int i);
++nav_msgs::Path getPath(){return path;}
++void clear();
++void publishPath()
++void publishPathNodes()
++void publishPathVehicles()
+-- private --
+-ros::NodeHandle n;
+-ros::Publisher pubPath;
+-ros::Publisher pubPathNodes;
+-ros::Publisher pubPathVehicles;
+-nav_msgs::Path path;
+-visualization_msgs::MarkerArray pathNodes;
+-visualization_msgs::MarkerArray pathVehicles;
+-bool smoothed = false;
+}
+
+
+class lookup{
+inline void dubinsLookup(float* lookup)
+inline int sign(double x)
+inline void collisionLookup()
+}
+
+class Config
+{
+-- public --
+Config();
+~Config();
+void loadRosParamFromNodeHandle();
+void reconfigure(const hybridParamsConfig& cfg);
+boost::mutex& configMutex()
+
+bool need_regenerate_collision_lookup
+bool use_costmap_converter
+bool move_backward
+bool need_reverse_goal
+bool reuse_last_plan
+bool can_use_hard_link
+int cold_down_count = 15;
+int start_count = 10;
+std::string costmap_converter_plugin
+
+-- private --
+-boost::mutex config_mutex_;
+}
+
+class Helper{
+static inline float normalizeHeading(float t)
+static inline float normalizeHeadingRad(float t)
+static inline float normalizeHeadingRadPi(float t)
+static inline float toDeg(float t)
+static inline float toRad(float t)
+static inline float clamp(float n, float lower, float upper)
+static inline float shortestAngleDiffPI(float t0, float t1)
+}
+class ColorPoint {
+float r, g, b;
+float val;
+ColorPoint(...)
+}
+class ColorGradient {
+-- public --
+  ColorGradient()
+  void addColorPoint()
+  void clearGradient()
+  void createDefaultHeatMapGradient()
+  void getColorAtValue()
+private:
+  vector<ColorPoint> color;      // An array of color points in ascending value.
+
+}
+
+class dataCell {
+    float dist;
+    char voronoi;
+    char queueing;
+    int obstX;
+    int obstY;
+    bool needsRaise;
+    int sqdist;
+}
+
+enum State
+{
+voronoiKeep
+freeQueued
+voronoiRetry
+voronoiPrune
+free
+occupied
+}
+enum QueueingState
+{
+fwNotQueued
+fwQueued
+fwProcessed
+bwQueued
+bwProcessed
+}
+enum ObstDataState
+{
+invalidObstData
+}
+enum markerMatchResult
+{
+pruned
+keep
+retry
+}
+
+class DynamicVoronoi{
+-- public --
+  DynamicVoronoi();
+  ~DynamicVoronoi();
+  void initializeEmpty();
+  void initializeMap();
+  void occupyCell(int x, int y);
+  void clearCell(int x, int y);
+  void exchangeObstacles(std::vector<INTPOINT> newObstacles);
+  void update(bool updateRealDist = true);
+  void prune();
+  float getDistance(int x, int y);
+  bool isVoronoi(int x, int y);
+  bool isOccupied(int x, int y);
+  void visualize(const char* filename = "result.ppm");
+  unsigned int getSizeX() {return sizeX;}
+  unsigned int getSizeY() {return sizeY;}
+  void setObstacle(int x, int y);
+  void removeObstacle(int x, int y);
+  inline void checkVoro(int x, int y, int nx, int ny, dataCell& c, dataCell& nc);
+  void recheckVoro();
+  void commitAndColorize(bool updateRealDist = true);
+  inline void reviveVoroNeighbors(int& x, int& y);
+  inline bool isOccupied(int& x, int& y, dataCell& c);
+  inline markerMatchResult markerMatch(int x, int y);
+  BucketPrioQueue open;
+  std::queue<INTPOINT> pruneQueue;
+  std::vector<INTPOINT> removeList;
+  std::vector<INTPOINT> addList;
+  std::vector<INTPOINT> lastObstacles;
+  int sizeY;
+  int sizeX;
+  std::vector<std::vector<dataCell>> data;
+  bool** gridMap;
+  int padding;
+  double doubleThreshold;
+  double sqrt2;
+}
+
+class dubins{
+int dubins_init();
+double dubins_path_length()
+int dubins_path_type()
+int dubins_path_sample()
+int dubins_path_sample_many()
+int dubins_path_endpoint();
+int dubins_extract_subpath();
+int dubins_LSL();
+int dubins_RSR();
+int dubins_LSR();
+int dubins_RSL();
+int dubins_LRL();
+int dubins_RLR();
+}
+
+
+
+class Constants
+
+class BucketPrioQueue {
+-- public --
++BucketPrioQueue();
++bool empty();
++void push(int prio, INTPOINT t);
++INTPOINT pop();
+-- private --
+-static void initSqrIndices();
+-static std::vector<int> sqrIndices;
+-static int numBuckets;
+-int count;
+-int nextBucket;
+-std::vector<std::queue<INTPOINT> > buckets;
+}
+
+
+
+ColorGradient *-- ColorPoint
+
+DynamicVoronoi *-- dataCell
+DynamicVoronoi *-- State
+DynamicVoronoi *-- QueueingState
+DynamicVoronoi *-- ObstDataState
+DynamicVoronoi *-- markerMatchResult
+
+
+@enduml
