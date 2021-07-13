@@ -1,0 +1,291 @@
+@startuml
+'https://plantuml.com/class-diagram
+namespace g2o{
+class BaseUnaryEdge << D E VertexXi >>
+class BaseBinaryEdge << D E VertexXi VertexXj >>
+class BaseMultiEdge<< D E>>
+
+
+class BaseVertex
+
+}
+
+
+namespace teb_local_planner{
+
+class BaseTebUnaryEdge <<int D, E, VertexXi >> {
+-- public method --
+  using typename g2o::BaseUnaryEdge<D, E, VertexXi>::ErrorVector;
+  using g2o::BaseUnaryEdge<D, E, VertexXi>::computeError;
+  ErrorVector& getError()
+  virtual bool read(std::istream& is)
+  virtual bool write(std::ostream& os) const
+  void setTebConfig(const TebConfig& cfg)
+-- protected method --
+  using g2o::BaseUnaryEdge<D, E, VertexXi>::_error;
+  using g2o::BaseUnaryEdge<D, E, VertexXi>::_vertices;
+  const TebConfig* cfg_;
+}
+
+class BaseTebBinaryEdge<int D, typename E, typename VertexXi, typename VertexXj>
+{
+-- public method --
+  using typename g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>::ErrorVector;
+  using g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>::computeError;
+  ErrorVector& getError()
+  virtual bool read(std::istream& is)
+  virtual bool write(std::ostream& os) const
+  void setTebConfig(const TebConfig& cfg)
+-- protected method --
+  using g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>::_error;
+  using g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>::_vertices;
+  const TebConfig* cfg_;
+}
+
+class BaseTebMultiEdge <<int D, E>>
+{
+-- public method --
+  using typename g2o::BaseMultiEdge<D, E>::ErrorVector;
+  using g2o::BaseMultiEdge<D, E>::computeError;
+  virtual void resize(size_t size)
+  ErrorVector& getError()
+  virtual bool read(std::istream& is)
+  virtual bool write(std::ostream& os) const
+  void setTebConfig(const TebConfig& cfg)
+-- protected method --
+  using g2o::BaseMultiEdge<D, E>::_error;
+  using g2o::BaseMultiEdge<D, E>::_vertices;
+  const TebConfig* cfg_;
+}
+
+class EdgeAcceleration<< 2 double>>
+{
+-- public method --
+EdgeAcceleration()
+void computeError()
+}
+
+class EdgeAccelerationStart<<2, const geometry_msgs::Twist*>>
+{
+-- public method --
+EdgeAccelerationStart()
+void computeError()
+void setInitialVelocity(const geometry_msgs::Twist& vel_start)
+}
+
+class EdgeAccelerationGoal<<2, const geometry_msgs::Twist*>>
+{
+-- public method --
+EdgeAccelerationGoal()
+void computeError()
+void setGoalVelocity(const geometry_msgs::Twist& vel_goal)
+}
+
+class EdgeAccelerationHolonomic<<3 double>>
+{
+-- public method --
+EdgeAccelerationHolonomic()
+void computeError()
+}
+
+class EdgeAccelerationHolonomicStart<<3, const geometry_msgs::Twist*>>
+{
+-- public method --
+EdgeAccelerationHolonomicStart()
+void computeError()
+void setInitialVelocity()
+}
+
+class EdgeAccelerationHolonomicGoal<<3, const geometry_msgs::Twist*>>
+{
+-- public method --
+EdgeAccelerationHolonomicGoal()
+void computeError()
+void setGoalVelocity()
+}
+
+class EdgeDynamicObstacle<<2, const Obstacle*, VertexPose>>
+{
+-- public method --
+EdgeDynamicObstacle()
+EdgeDynamicObstacle(double t)
+void computeError()
+void setObstacle(const Obstacle* obstacle)
+void setRobotModel(const BaseRobotFootprintModel* robot_model)
+void setParameters(const TebConfig& cfg, const BaseRobotFootprintModel* robot_model, const Obstacle* obstacle)
+-- protected method --
+const BaseRobotFootprintModel* robot_model_
+double t_
+}
+
+class EdgeKinematicsDiffDrive<< 2 double VertexPose VertexPose>>
+{
+-- public method --
+EdgeKinematicsDiffDrive()
+void computeError()
+void linearizeOplus()
+}
+
+class EdgeKinematicsCarlike<<2 double VertexPose VertexPose>>
+{
+-- public method --
+EdgeKinematicsCarlike()
+void computeError()
+}
+
+class EdgeObstacle<<1 const Obstacle* VertexPose>>
+{
+-- public method --
+EdgeObstacle()
+void computeError()
+void setObstacle(const Obstacle* obstacle)
+void setRobotModel(const BaseRobotFootprintModel* robot_model)
+void setParameters(const TebConfig& cfg, const BaseRobotFootprintModel* robot_model, const Obstacle* obstacle)
+-- protected method --
+const BaseRobotFootprintModel* robot_model
+}
+
+class EdgeInflatedObstacle<<2 Obstacle* VertexPose>>
+{
+-- public method --
+EdgeInflatedObstacle()
+void computeError()
+void setObstacle(const Obstacle* obstacle)
+void setRobotModel(const BaseRobotFootprintModel* robot_model)
+void setParameters(const TebConfig& cfg, (const BaseRobotFootprintModel* robot_model, const Osbtacle* obstacle)
+-- protected method --
+const BaseRobotFootprintModel *robot_model
+}
+
+class EdgePreferRotDir<<1 double VertexPose VertexPose>>
+{
+-- public method --
+EdgePreferRotDir()
+void computeError()
+void setRotDir(double dir)
+void preferRight()
+void preferLeft()
+}
+
+class EdgeShortestPath<<1 double VertexPose, VertexPose>>
+{
+-- public method --
+EdgeShorttestPath()
+void computeError()
+}
+
+class EdgeTimeOptimal<<1 double VertexTimeDiff>>
+{
+-- public method --
+EdgeTimeOptimal()
+void computeError()
+void linearizeOplus()
+}
+
+class EdgeVelocity<<2 double>>
+{
+-- public method --
+EdgeVelocity()
+void computeError()
+}
+
+class EdgeVelocityObstacleRatio
+{
+-- public method --
+EdgeVelocityObstacleRatio()
+void computeError()
+void setObstacle(const Obstacle* obstacle)
+void setRobotModel(const BaseRobotFootprintModel* robot_model)
+void setParameters(const TebConfig& cfg, const BaseRobotFootprintModel* robot_model, const Obstacle* obstacle)
+-- protected method --
+const BaseRobotFootprintModel* robot_model
+}
+
+class EdgeViaPoint<<1 Eigen::Vector2d* VertexPose>>
+{
+EdgeViaPoint()
+void computeError()
+void setViaPoint(const Eigen::Vector2d* via_point)
+void setParameters(const TebConfig& cfg, const Eigen::Vector2d* via_point)
+}
+
+class Penalties{
+double penaltyBoundToInterval(const double& var,const double& a,const double& epsilon)
+double penaltyBoundToInterval(const double& var,const double& a, const double& b, const double& epsilon)
+double penaltyBoundFromBelow(const double& var, const double& a,const double& epsilon)
+double penaltyBoundToIntervalDerivative(const double& var,const double& a, const double& epsilon)
+double penaltyBoundToIntervalDerivative(const double& var,const double& a, const double& b, const double& epsilon)
+double penaltyBoundFromBelowDerivative(const double& var, const double& a,const double& epsilon)
+}
+}
+
+g2o.BaseUnaryEdge <|-- teb_local_planner.BaseTebUnaryEdge
+g2o.BaseBinyrEdge <|-- teb_local_planner.BaseTebBinaryEdge
+g2o.BaserMultiEdge <|-- teb_local_planner.BaseTebMultiEdge
+teb_local_planner.BaseTebMultiEdge <|-- teb_local_planner.EdgeAcceleration
+teb_local_planner.BaseTebMultiEdge <|-- teb_local_planner.EdgeAccelerationStart
+teb_local_planner.BaseTebMultiEdge <|-- teb_local_planner.EdgeAccelerationGoal
+teb_local_planner.BaseTebMultiEdge <|-- teb_local_planner.EdgeAccelerationHolonomic
+teb_local_planner.BaseTebMultiEdge <|-- teb_local_planner.EdgeAccelerationHolonomicStart
+teb_local_planner.BaseTebMultiEdge <|-- teb_local_planner.EdgeAccelerationHolonomicGoal
+teb_local_planner.BaseTebUnaryEdge <|-- teb_local_planner.EdgeDynamicObstacle
+teb_local_planner.BaseTebBinaryEdge <|-- teb_local_planner.EdgeKinematicsDiffDrive
+teb_local_planner.BaseTebBinaryEdge <|-- teb_local_planner.EdgeKinematicsCarlike
+teb_local_planner.BaseTebUnaryEdge <|-- teb_local_planner.EdgeObstacle
+teb_local_planner.BaseTebUnaryEdge <|-- teb_local_planner.EdgeInflatedObstacle
+teb_local_planner.BaseTebBinaryEdge <|-- teb_local_planner.EdgePreferRotDir
+teb_local_planner.BaseTebBinaryEdge <|-- teb_local_planner.EdgeShortestPath
+teb_local_planner.BaseTebUnaryEdge <|-- teb_local_planner.EdgeTimeOptimal
+teb_local_planner.BaseTebUnaryEdge <|-- teb_local_planner.EdgeViaPoint
+teb_local_planner.BaseTebMultiEdge <|-- teb_local_planner.EdgeVelocity
+teb_local_planner.BaseTebMultiEdge <|-- teb_local_planner.EdgeVelocityObstacleRatio
+
+
+
+
+namespace teb_local_planner{
+
+class VertexPose<< 3 PoseSE2>>
+{
+-- public method --
+VertexPose(bool fixed = false)
+VertexPose(const PoseSE2& pose, bool fixed = false)
+VertexPose(const Eigen::Ref<const Eigen::Vector2d>& position, double theta, bool fixed = false)
+VertexPose(double x, double y, double theta, bool fixed = false)
+inline PoseSE2& pose()
+inline const PoseSE2& pose() const
+inline Eigen::Vector2d& position()
+inline const Eigen::Vector2d& position() const
+inline double& x()
+inline const double& x() const
+inline double& y()
+inline const double& y() const
+inline double& theta()
+inline const double& theta() const
+virtual void setToOriginImpl()
+virtual void oplusImpl(const double* update)
+virtual bool read(std::istream& is)
+virtual bool write(std::ostream& os) const
+}
+
+class VertexTimeDiff<<1 double>>
+{
+-- public method --
+VertexTimeDiff(bool fixed = false)
+VertexTimeDiff(double dt, bool fixed=false)
+inline double& dt()
+inline const double& dt() const
+virtual void setToOriginImpl()
+virtual void oplusImpl(const double* update)
+virtual bool read(std::istream& is)
+virtual bool write(std::ostream& os) const
+}
+
+}
+
+g2o.BaseVertex <|-- teb_local_planner.VertexPose
+g2o.BaseVertex <|-- teb_local_planner.VertexTimeDiff
+
+
+
+@enduml

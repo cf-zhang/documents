@@ -1,0 +1,406 @@
+@startuml
+namespace teb_local_planner{
+class Obstacle{
+Obstacle()
+virtual ~Obstacle()
+virtual const Eigen::Vector2d& getCentroid() const = 0;
+virtual std::complex<double> getCentroidCplx() const = 0;
+virtual bool checkCollision(const Eigen::Vector2d& position, double min_dist) const = 0;
+virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const = 0;
+virtual double getMinimumDistance(const Eigen::Vector2d& position) const = 0;
+virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const = 0;
+virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const = 0;
+virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& position, double t) const = 0;
+virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double t) const = 0;
+virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const = 0;
+virtual void predictCentroidConstantVelocity(double t, Eigen::Ref<Eigen::Vector2d> position) const
+bool isDynamic() const
+void setCentroidVelocity(const Eigen::Ref<const Eigen::Vector2d>& vel)
+void setCentroidVelocity(const geometry_msgs::TwistWithCovariance& velocity, const geometry_msgs::Quaternion& orientation)
+void setCentroidVelocity(const geometry_msgs::TwistWithCovariance& velocity, const geometry_msgs::QuaternionStamped& orientation)
+const Eigen::Vector2d& getCentroidVelocity()
+virtual void toPolygonMsg(geometry_msgs::Polygon& polygon) = 0
+virtual void toTwistWithCovarianceMsg(geometry_msgs::TwistWithCovariance& twistWithCovariance)
+-- protected method --
+bool dynamic_;
+Eigen::Vector2d centroid_velocity_;
+}
+note top of Obstacle : typedef boost::shared_ptr<Obstacle> ObstaclePtr;\ntypedef boost::shared_ptr<const Obstacle> ObstacleConstPtr;\ntypedef std::vector<ObstaclePtr> ObstContainer;
+
+class PointObstacle
+{
+-- public method --
+PointObstacle()
+PointObstacle(const Eigen::Ref< const Eigen::Vector2d>& position)
+PointObstacle(double x, double y)
+virtual bool checkCollision(const Eigen::Vector2d& point, double min_dist) const
+virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const
+virtual double getMinimumDistance(const Eigen::Vector2d& position) const
+virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+virtual double getMinimumDistance(const Point2dContainer& polygon) const
+virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) cons
+virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& position, double t) const
+virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double t) const
+}virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const
+virtual void predictCentroidConstantVelocity(double t, Eigen::Ref<Eigen::Vector2d> position) const
+virtual const Eigen::Vector2d& getCentroid() const
+const Eigen::Vector2d& position() const
+Eigen::Vector2d& position()
+double& x()
+const double& x() const
+double& y()
+const double& y() const
+virtual void toPolygonMsg(geometry_msgs::Polygon& polygon)
+-- protected method --
+Eigen::Vector2d pos_
+}
+
+class CircularObstacle
+{
+CircularObstacle()
+CircularObstacle(const Eigen::Ref< const Eigen::Vector2d>& position, double radius)
+CircularObstacle(double x, double y, double radius)
+virtual bool checkCollision(const Eigen::Vector2d& point, double min_dist) const
+virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const
+virtual double getMinimumDistance(const Eigen::Vector2d& position) const
+virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+virtual double getMinimumDistance(const Point2dContainer& polygon) const
+virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const
+virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& position, double t) const
+virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double t) const
+virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const
+virtual void predictCentroidConstantVelocity(double t, Eigen::Ref<Eigen::Vector2d> position) const
+virtual const Eigen::Vector2d& getCentroid() const
+virtual std::complex<double> getCentroidCplx() const
+const Eigen::Vector2d& position() const
+Eigen::Vector2d& position()
+double& x()
+const double& x() const
+double& y()
+const double& y() const
+double& radius()
+const double& radius() const
+virtual void toPolygonMsg(geometry_msgs::Polygon& polygon)
+-- protected method --
+Eigen::Vector2d pos_
+double radius_ = 0.0
+}
+note top of LineObstacle : typedef std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > VertexContainer;
+class LineObstacle
+{
+-- public method --
+LineObstacle()
+LineObstacle(const Eigen::Ref< const Eigen::Vector2d>& line_start, const Eigen::Ref< const Eigen::Vector2d>& line_end)
+LineObstacle(double x1, double y1, double x2, double y2)
+virtual bool checkCollision(const Eigen::Vector2d& point, double min_dist) const
+virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const
+virtual double getMinimumDistance(const Eigen::Vector2d& position) const
+virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+virtual double getMinimumDistance(const Point2dContainer& polygon) const
+virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const
+virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& position, double t) const
+virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double t) const
+virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const
+virtual const Eigen::Vector2d& getCentroid() const
+virtual std::complex<double> getCentroidCplx() const
+const Eigen::Vector2d& start() const
+void setStart(const Eigen::Ref<const Eigen::Vector2d>& start)
+const Eigen::Vector2d& end() const
+void setEnd(const Eigen::Ref<const Eigen::Vector2d>& end)
+virtual void toPolygonMsg(geometry_msgs::Polygon& polygon)
+-- protected method --
+void calcCentroid()
+-- private method --
+Eigen::Vector2d start_;
+Eigen::Vector2d end_;
+Eigen::Vector2d centroid_;
+}
+
+class PillObstacle
+{
+-- public method --
+PillObstacle()
+PillObstacle(const Eigen::Ref< const Eigen::Vector2d>& line_start, const Eigen::Ref< const Eigen::Vector2d>& line_end, double radius)
+PillObstacle(double x1, double y1, double x2, double y2, double radius)
+virtual bool checkCollision(const Eigen::Vector2d& point, double min_dist) const
+virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const
+virtual double getMinimumDistance(const Eigen::Vector2d& position) const
+virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+virtual double getMinimumDistance(const Point2dContainer& polygon) const
+virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const
+virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& position, double t) const
+virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double t) const
+virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const
+virtual const Eigen::Vector2d& getCentroid() const
+virtual std::complex<double> getCentroidCplx() const
+const Eigen::Vector2d& start() const
+void setStart(const Eigen::Ref<const Eigen::Vector2d>& start)
+const Eigen::Vector2d& end() const
+void setEnd(const Eigen::Ref<const Eigen::Vector2d>& end)
+virtual void toPolygonMsg(geometry_msgs::Polygon& polygon)
+-- protected method --
+void calcCentroid()
+-- private method --
+Eigen::Vector2d start_;
+Eigen::Vector2d end_;
+double radius_ = 0.0;
+Eigen::Vector2d centroid_;
+}
+
+class PolygonObstacle
+{
+PointObstacle()
+PolygonObstacle(const Point2dContainer& vertices)
+virtual bool checkCollision(const Eigen::Vector2d& point, double min_dist) const
+virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const;
+virtual double getMinimumDistance(const Eigen::Vector2d& position) const
+virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+virtual double getMinimumDistance(const Point2dContainer& polygon) const
+virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const;
+virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& position, double t) const
+virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double t) const
+virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const
+virtual void predictVertices(double t, Point2dContainer& pred_vertices) const
+virtual const Eigen::Vector2d& getCentroid() const
+virtual std::complex<double> getCentroidCplx() const
+virtual void toPolygonMsg(geometry_msgs::Polygon& polygon)
+const Point2dContainer& vertices() const
+Point2dContainer& vertices()
+void pushBackVertex(const Eigen::Ref<const Eigen::Vector2d>& vertex)
+void pushBackVertex(double x, double y)
+void finalizePolygon()
+void clearVertices()
+int noVertices() const
+-- protected method --
+void fixPolygonClosure();
+void calcCentroid();
+Point2dContainer vertices_;
+Eigen::Vector2d centroid_;
+bool finalized
+}
+
+Obstacle <|-- PolygonObstacle
+Obstacle <|-- PillObstacle
+Obstacle <|-- LineObstacle
+Obstacle <|-- CircularObstacle
+Obstacle <|-- PointObstacle
+
+class PoseSE2
+{
+PoseSE2()
+PoseSE2(const Eigen::Ref<const Eigen::Vector2d>& position, double theta)
+PoseSE2(double x, double y, double theta)
+PoseSE2(const geometry_msgs::Pose& pose)
+PoseSE2(const tf::Pose& pose)
+PoseSE2(const PoseSE2& pose)
+~PoseSE2()
+Eigen::Vector2d& position()
+const Eigen::Vector2d& position() const
+double& x()
+const double& x() const
+double& y()
+const double& y() const
+double& theta()
+const double& theta() const
+void setZero()
+void toPoseMsg(geometry_msgs::Pose& pose) const
+Eigen::Vector2d orientationUnitVec() const
+void scale(double factor)
+void plus(const double* pose_as_array)
+void averageInPlace(const PoseSE2& pose1, const PoseSE2& pose2)
+static PoseSE2 average(const PoseSE2& pose1, const PoseSE2& pose2)
+void rotateGlobal(double angle, bool adjust_theta=true)
+PoseSE2& operator=( const PoseSE2& rhs )
+PoseSE2& operator+=(const PoseSE2& rhs)
+friend PoseSE2 operator+(PoseSE2 lhs, const PoseSE2& rhs)
+PoseSE2& operator-=(const PoseSE2& rhs)
+friend PoseSE2 operator-(PoseSE2 lhs, const PoseSE2& rhs)
+friend PoseSE2 operator*(PoseSE2 pose, double scalar)
+friend PoseSE2 operator*(double scalar, PoseSE2 pose)
+friend std::ostream& operator<< (std::ostream& stream, const PoseSE2& pose)
+-- private method --
+Eigen::Vector2d _position;
+double _theta
+}
+
+
+class VelMeasurement
+{
+    double v = 0;
+    double omega = 0;
+}
+class FailureDetector
+{
+-- public method --
+FailureDetector()
+~FailureDetector()
+void setBufferLength(int length)
+void update(const geometry_msgs::Twist& twist, double v_max, double v_backwards_max, double omega_max, double v_eps, double omega_eps)
+bool isOscillating() const
+void clear();
+-- protected method --
+bool detect(double v_eps, double omega_eps)
+-- private method --
+boost::circular_buffer<VelMeasurement> buffer_;
+bool oscillating_ = false;
+}
+
+note top of TimedElasticBand : typedef std::vector<VertexPose*> PoseSequence;\ntypedef std::vector<VertexTimeDiff*> TimeDiffSequence
+
+class TimedElasticBand
+{
+-- public method --
+TimedElasticBand()
+virtual ~TimedElasticBand()
+PoseSequence& poses() {return pose_vec_;};
+const PoseSequence& poses() const
+TimeDiffSequence& timediffs()
+const TimeDiffSequence& timediffs() const
+double& TimeDiff(int index)
+const double& TimeDiff(int index) const
+PoseSE2& Pose(int index)
+const PoseSE2& Pose(int index) const
+PoseSE2& BackPose()
+const PoseSE2& BackPose()
+double& BackTimeDiff()
+const double& BackTimeDiff() const
+VertexPose* PoseVertex(int index)
+VertexTimeDiff* TimeDiffVertex(int index)
+void addPose(const PoseSE2& pose, bool fixed=false);
+void addPose(const Eigen::Ref<const Eigen::Vector2d>& position, double theta, bool fixed=false);
+void addPose(double x, double y, double theta, bool fixed=false);
+void addTimeDiff(double dt, bool fixed=false);
+void addPoseAndTimeDiff(const PoseSE2& pose, double dt);
+void addPoseAndTimeDiff(const Eigen::Ref<const Eigen::Vector2d>& position, double theta, double dt);
+void addPoseAndTimeDiff(double x, double y, double theta, double dt)
+void insertPose(int index, const PoseSE2& pose);
+void insertPose(int index, const Eigen::Ref<const Eigen::Vector2d>& position, double theta);
+void insertPose(int index, double x, double y, double theta);
+void insertTimeDiff(int index, double dt);
+void deletePose(int index);
+void deletePoses(int index, int number);
+void deleteTimeDiff(int index);
+void deleteTimeDiffs(int index, int number);
+bool initTrajectoryToGoal(const PoseSE2& start, const PoseSE2& goal, double diststep=0, double max_vel_x=0.5, int min_samples = 3, bool guess_backwards_motion = false);
+bool initTrajectoryToGoal(BidirIter path_start, BidirIter path_end, Fun fun_position, double max_vel_x, double max_vel_theta,
+boost::optional<double> max_acc_x, boost::optional<double> max_acc_theta,
+boost::optional<double> start_orientation, boost::optional<double> goal_orientation, int min_samples = 3, bool guess_backwards_motion = false);
+bool initTrajectoryToGoal(const std::vector<geometry_msgs::PoseStamped>& plan, double max_vel_x, double max_vel_theta, bool estimate_orient=false, int min_samples = 3, bool guess_backwards_motion = false);
+void updateAndPruneTEB(boost::optional<const PoseSE2&> new_start, boost::optional<const PoseSE2&> new_goal, int min_samples = 3);
+void autoResize(double dt_ref, double dt_hysteresis, int min_samples = 3, int max_samples=1000, bool fast_mode=false);
+void setPoseVertexFixed(int index, bool status);
+void setTimeDiffVertexFixed(int index, bool status)
+void clearTimedElasticBand();
+int findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_point, double* distance = NULL, int begin_idx=0) const;
+int findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_line_start, const Eigen::Ref<const Eigen::Vector2d>& ref_line_end, double* distance = NULL) const;
+int findClosestTrajectoryPose(const Point2dContainer& vertices, double* distance = NULL) const;
+int findClosestTrajectoryPose(const Obstacle& obstacle, double* distance = NULL) const;
+int sizePoses() const
+int sizeTimeDiffs() const
+bool isInit() const
+double getSumOfAllTimeDiffs() const;
+double getSumOfTimeDiffsUpToIdx(int index) const;
+double getAccumulatedDistance() const;
+bool isTrajectoryInsideRegion(double radius, double max_dist_behind_robot=-1, int skip_poses=0);
+-- protected method --
+PoseSequence pose_vec_;
+TimeDiffSequence timediff_vec_;
+}
+note top of BaseRobotFootprintModel : typedef boost::shared_ptr<BaseRobotFootprintModel> RobotFootprintModelPtr; \ntypedef boost::shared_ptr<const BaseRobotFootprintModel> RobotFootprintModelConstPtr;
+class BaseRobotFootprintModel
+{
+-- public method --
+BaseRobotFootprintModel()
+virtual ~BaseRobotFootprintModel()
+virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const = 0;
+virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const = 0;
+virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const
+virtual double getInscribedRadius()
+}
+
+class PointRobotFootprint
+{
+-- public method --
+PointRobotFootprint()
+virtual ~PointRobotFootprint()
+virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
+virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const
+virtual double getInscribedRadius()
+}
+
+class CircularRobotFootprint
+{
+-- public method --
+CircularRobotFootprint(double radius)
+virtual ~CircularRobotFootprint()
+void setRadius(double radius)
+virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
+virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const
+virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const
+virtual double getInscribedRadius()
+-- private method --
+double radius
+}
+
+class TwoCirclesRobotFootprint
+{
+-- public method --
+TwoCirclesRobotFootprint(double front_offset, double front_radius, double rear_offset, double rear_radius)
+virtual ~TwoCirclesRobotFootprint()
+void setParameters(double front_offset, double front_radius, double rear_offset, double rear_radius)
+virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
+virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const
+virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const
+virtual double getInscribedRadius()
+-- private method --
+double front_offset_;
+double front_radius_;
+double rear_offset_;
+double rear_radius_;
+}
+
+class LineRobotFootprint
+{
+LineRobotFootprint(const geometry_msgs::Point& line_start, const geometry_msgs::Point& line_end)
+LineRobotFootprint(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end)
+virtual ~LineRobotFootprint()
+void setLine(const geometry_msgs::Point& line_start, const geometry_msgs::Point& line_end)
+void setLine(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end)
+virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
+virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const
+virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const
+virtual double getInscribedRadius()
+-- private method --
+void transformToWorld(const PoseSE2& current_pose, Eigen::Vector2d& line_start_world, Eigen::Vector2d& line_end_world) const
+Eigen::Vector2d line_start_;
+Eigen::Vector2d line_end_;
+}
+
+class PolygonRobotFootprint
+{
+-- public method --
+PolygonRobotFootprint(const Point2dContainer& vertices)
+virtual ~PolygonRobotFootprint()
+void setVertices(const Point2dContainer& vertices)
+virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
+virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const
+virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const
+virtual double getInscribedRadius()
+-- private method --
+void transformToWorld(const PoseSE2& current_pose, Point2dContainer& polygon_world) const
+Point2dContainer vertices_;
+}
+
+BaseRobotFootprintModel <|-- PointRobotFootprint
+BaseRobotFootprintModel <|-- CircularRobotFootprint
+BaseRobotFootprintModel <|-- TwoCirclesRobotFootprint
+BaseRobotFootprintModel <|-- LineRobotFootprint
+BaseRobotFootprintModel <|-- PolygonRobotFootprint
+
+
+
+
+
+
+}
+@enduml

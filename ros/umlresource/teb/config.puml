@@ -1,5 +1,5 @@
 @startuml
-Title "costmap2d类图"
+Title "TebConfig类图"
 
 
 class Trajectory

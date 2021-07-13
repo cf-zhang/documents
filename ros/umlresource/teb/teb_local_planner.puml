@@ -1,228 +1,301 @@
-
 @startuml
-Title "teb_local_planner类图"
-class PoseSE2
+namespace teb_local_planner{
+
+class Utils
 {
--- public method --
-  +PoseSE2()
-  +PoseSE2(const Eigen::Ref<const Eigen::Vector2d>& position, double theta)
-  +PoseSE2(double x, double y, double theta)
-  +PoseSE2(const geometry_msgs::Pose& pose)
-  +PoseSE2(const tf::Pose& pose)
-  +PoseSE2(const PoseSE2& pose)
-  +~PoseSE2()
-  +Eigen::Vector2d& position()
-  +const Eigen::Vector2d& position() const
-  +double& x()
-  +const double& x() const
-  +double& y()
-  +const double& y() const
-  +double& theta()
-  +const double& theta() const
-  +void setZero()
-  +void toPoseMsg(geometry_msgs::Pose& pose) const
-  +Eigen::Vector2d orientationUnitVec() const
-  +void scale(double factor)
-  +void plus(const double* pose_as_array)
-  +void averageInPlace(const PoseSE2& pose1, const PoseSE2& pose2)
-  +static PoseSE2 average(const PoseSE2& pose1, const PoseSE2& pose2)
-  +void rotateGlobal(double angle, bool adjust_theta=true)
-  +PoseSE2& operator=( const PoseSE2& rhs )
-  +PoseSE2& operator+=(const PoseSE2& rhs)
-  +friend PoseSE2 operator+(PoseSE2 lhs, const PoseSE2& rhs)
-  +PoseSE2& operator-=(const PoseSE2& rhs)
-  +friend PoseSE2 operator-(PoseSE2 lhs, const PoseSE2& rhs)
-  +friend PoseSE2 operator*(PoseSE2 pose, double scalar)
-  +friend PoseSE2 operator*(double scalar, PoseSE2 pose)
-  +friend std::ostream& operator<< (std::ostream& stream, const PoseSE2& pose)
--- private data --
-  -Eigen::Vector2d _position;
-  -double _theta;
+inline std::complex<long double> getCplxFromHcGraph(HcGraphVertexType vert_descriptor, const HcGraph& graph)
+inline const Eigen::Vector2d& getVector2dFromHcGraph(HcGraphVertexType vert_descriptor, const HcGraph& graph)
 
 }
-
-
-class HomotopyClassPlanner
-
-
-class GraphSearchInterface
+class HcGraphVertex
 {
 -- public method --
-+virtual void createGraph()
-+void clearGraph()
+Eigen::Vector2d pos;
+}
 
--- public data --
-+HcGraph graph_
+note top of GraphSearchInterface : typedef boost::adjacency_list < boost::listS, boost::vecS, boost::directedS, HcGraphVertex, boost::no_property > HcGraph;\ntypedef boost::graph_traits<HcGraph>::vertex_descriptor HcGraphVertexType;\ntypedef boost::graph_traits<HcGraph>::edge_descriptor HcGraphEdgeType;\ntypedef boost::graph_traits<HcGraph>::vertex_iterator HcGraphVertexIterator;\ntypedef boost::graph_traits<HcGraph>::edge_iterator HcGraphEdgeIterator;\ntypedef boost::graph_traits<HcGraph>::adjacency_iterator HcGraphAdjecencyIterator;
 
+class GraphSearchInterface{
+-- public method --
+virtual void createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold, const geometry_msgs::Twist* start_velocity, bool free_goal_vel = false) = 0;
+void clearGraph()
+HcGraph graph_;
 -- protected method --
-#GraphSearchInterface()
-#void DepthFirst()
--- protected data --
-#const TebConfig* cfg_
-#HomotopyClassPlanner* const hcp_
+GraphSearchInterface(const TebConfig& cfg, HomotopyClassPlanner* hcp)
+void DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>& visited, const HcGraphVertexType& goal, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity, bool free_goal_vel = false);
+-- protected method --
+const TebConfig* cfg_;
+HomotopyClassPlanner* const hcp_;
 }
-
 
 class lrKeyPointGraph
 {
 -- public method --
-+lrKeyPointGraph()
-+virtual ~lrKeyPointGraph()
-+virtual void createGraph();
+lrKeyPointGraph(const TebConfig& cfg, HomotopyClassPlanner* hcp)
+virtual ~lrKeyPointGraph()
+virtual void createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold, const geometry_msgs::Twist* start_velocity, bool free_goal_vel = false);
 }
-
 
 class ProbRoadmapGraph
 {
 -- public method --
-+ProbRoadmapGraph()
-+virtual ~ProbRoadmapGraph()
-+virtual void createGraph()
---private data  --
--boost::random::mt19937 rnd_generator_;
+ProbRoadmapGraph(const TebConfig& cfg, HomotopyClassPlanner* hcp)
+virtual ~ProbRoadmapGraph()
+virtual void createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold, const geometry_msgs::Twist* start_velocity, bool free_goal_vel = false);
+-- private method --
+boost::random::mt19937 rnd_generator_;
 }
 
-GraphSearchInterface *-- HomotopyClassPlanner
-GraphSearchInterface *-- TebConfig
 GraphSearchInterface <|-- lrKeyPointGraph
 GraphSearchInterface <|-- ProbRoadmapGraph
 
 
-class VelMeasurement
-{
--- public data --
-+double v = 0;
-+double omega = 0;
-}
-class FailureDetector
+note top of PlannerInterface : typedef boost::shared_ptr<PlannerInterface> PlannerInterfacePtr;
+class PlannerInterface
 {
 -- public method --
-+FailureDetector()
-+~FailureDetector()
-+void setBufferLength(int length)
-+void update();
-+bool isOscillating() const;
-+void clear();
+PlannerInterface()
+virtual ~PlannerInterface()
+virtual bool plan(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false) = 0;
+virtual bool plan(const tf::Pose& start, const tf::Pose& goal, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false) = 0;
+virtual bool plan(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false) = 0;
+virtual bool getVelocityCommand(double& vx, double& vy, double& omega, int look_ahead_poses) const = 0;
+virtual void clearPlanner() = 0;
+virtual void setPreferredTurningDir(RotType dir)
+virtual void visualize()
+virtual void updateRobotModel(RobotFootprintModelPtr robot_model)
+virtual bool isTrajectoryFeasible() = 0;
+virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, bool alternative_time_cost=false)
+virtual bool hasDiverged() const = 0;
+
+}
+
+class HomotopyClassPlannerUtils
+{
+-- public method --
+inline std::complex<long double> getCplxFromVertexPosePtr(const VertexPose* pose)
+inline std::complex<long double> getCplxFromMsgPoseStamped(const geometry_msgs::PoseStamped& pose)
+
+}
+
+note top of HomotopyClassPlanner : using EquivalenceClassContainer = std::vector< std::pair<EquivalenceClassPtr, bool> >;
+
+
+class HomotopyClassPlanner
+{
+HomotopyClassPlanner();
+HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(), TebVisualizationPtr visualization = TebVisualizationPtr(), const ViaPointContainer* via_points = NULL);
+virtual ~HomotopyClassPlanner();
+void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(), TebVisualizationPtr visualization = TebVisualizationPtr(), const ViaPointContainer* via_points = NULL);
+void updateRobotModel(RobotFootprintModelPtr robot_model );
+virtual bool plan(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false);
+virtual bool plan(const tf::Pose& start, const tf::Pose& goal, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false);
+virtual bool plan(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false);
+virtual bool getVelocityCommand(double& vx, double& vy, double& omega, int look_ahead_poses) const;
+TebOptimalPlannerPtr bestTeb() const
+virtual bool isTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec, double inscribed_radius = 0.0, double circumscribed_radius=0.0, int look_ahead_idx=-1)
+TebOptimalPlannerPtr findBestTeb();
+TebOptPlannerContainer::iterator removeTeb(TebOptimalPlannerPtr& teb);
+void setVisualization(TebVisualizationPtr visualization);
+virtual void visualize();
+void exploreEquivalenceClassesAndInitTebs(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, const geometry_msgs::Twist* start_vel, bool free_goal_vel = false);
+TebOptimalPlannerPtr addAndInitNewTeb(BidirIter path_start, BidirIter path_end, Fun fun_position, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity, bool free_goal_vel = false);
+TebOptimalPlannerPtr addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_velocity, bool free_goal_vel = false);
+TebOptimalPlannerPtr addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_velocity, bool free_goal_vel = false);
+void updateAllTEBs(const PoseSE2* start, const PoseSE2* goal, const geometry_msgs::Twist* start_velocity);
+void optimizeAllTEBs(int iter_innerloop, int iter_outerloop);
+TebOptimalPlannerPtr getInitialPlanTEB();
+TebOptimalPlannerPtr selectBestTeb();
+virtual void clearPlanner()
+virtual void setPreferredTurningDir(RotType dir);
+EquivalenceClassPtr calculateEquivalenceClass(BidirIter path_start, BidirIter path_end, Fun fun_cplx_point, const ObstContainer* obstacles = NULL, boost::optional<TimeDiffSequence::iterator> timediff_start = boost::none, boost::optional<TimeDiffSequence::iterator> timediff_end = boost::none);
+const TebOptPlannerContainer& getTrajectoryContainer() const
+bool hasDiverged() const override;
+virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false);
+inline static bool isHSignatureSimilar(const std::complex<long double>& h1, const std::complex<long double>& h2, double threshold)
+void deletePlansDetouringBackwards(const double orient_threshold, const double len_orientation_vector);
+bool computeStartOrientation(const TebOptimalPlannerPtr plan, const double len_orientation_vector, double& orientation);
+const TebConfig* config() const
+const ObstContainer* obstacles() const
+bool isInitialized() const
+void clearGraph()
+int bestTebIdx() const;
+bool addEquivalenceClassIfNew(const EquivalenceClassPtr& eq_class, bool lock=false);
+const EquivalenceClassContainer& getEquivalenceClassRef() const
+bool isInBestTebClass(const EquivalenceClassPtr& eq_class) const;
+int numTebsInClass(const EquivalenceClassPtr& eq_class) const
+int numTebsInBestTebClass() const;
+void randomlyDropTebs();
 -- protected method --
-#bool detect(double v_eps, double omega_eps);
--- private data --
--boost::circular_buffer<VelMeasurement> buffer_
--bool oscillating_
-
+bool hasEquivalenceClass(const EquivalenceClassPtr& eq_class) const;
+void renewAndAnalyzeOldTebs(bool delete_detours);
+void updateReferenceTrajectoryViaPoints(bool all_trajectories);
+const TebConfig* cfg_;
+ObstContainer* obstacles_;
+const ViaPointContainer* via_points_;
+TebVisualizationPtr visualization_;
+TebOptimalPlannerPtr best_teb_;
+EquivalenceClassPtr best_teb_eq_class_;
+RobotFootprintModelPtr robot_model_;
+const std::vector<geometry_msgs::PoseStamped>* initial_plan_;
+EquivalenceClassPtr initial_plan_eq_class_;
+TebOptimalPlannerPtr initial_plan_teb_;
+TebOptPlannerContainer tebs_;
+EquivalenceClassContainer equivalence_classes_;
+boost::shared_ptr<GraphSearchInterface> graph_search_;
+ros::Time last_eq_class_switching_time_;
+std::default_random_engine random_;
+bool initialized_;
+TebOptimalPlannerPtr last_best_teb_;
 }
-
-FailureDetector *-- VelMeasurement
-
-
-
-
-
-
-
-
-
-
-
-
-
-class HSignature
-class HSignature3d
-class EquivalenceClass
-{
--- public method --
-   +EquivalenceClass()
-   +virtual ~EquivalenceClass()
-   +virtual bool isEqual(const EquivalenceClass& other) const = 0;
-   +virtual bool isValid() const = 0;
-   +virtual bool isReasonable() const = 0;
-}
-
-EquivalenceClass <|-- HSignature
-EquivalenceClass <|-- HSignature3d
-
-
-
-class Trajectory
-class Robot
-class GoalTolerance
-class Obstacles
-class Optimization
-class HomotopyClasses
-class Recovery
-
-class TebConfig
-{
---public data --
-  +std::string odom_topic;
-  +std::string map_frame;
-  +Recovery recovery
-  +Trajectory trajectory
-  +Robot robot
-  +GoalTolerance goal_tolerance
-  +Obstacles　obstacles
-  +HomotopyClasses homotopyclasses
-  +Optimization optim
--- public method --
-  +TebConfig()
-  +void loadRosParamFromNodeHandle(const ros::NodeHandle& nh);
-  +void reconfigure(KinematicParamsConfig& cfg);
-  +void checkParameters() const;
-  +void checkDeprecated(const ros::NodeHandle& nh) const;
-  +boost::mutex& configMutex()
--- private date --
-  -boost::mutex config_mutex_;
-
-}
-
-TebConfig *-- Recovery
-TebConfig *-- Trajectory
-TebConfig *-- Robot
-TebConfig *-- GoalTolerance
-TebConfig *-- Obstacles
-TebConfig *-- HomotopyClasses
-TebConfig *-- Optimization
-
+note top of HomotopyClassPlanner : typedef boost::shared_ptr<HomotopyClassPlanner> HomotopyClassPlannerPtr;
 
 class TebOptimalPlanner
-
-class TebVisualization
 {
---public method--
-+TebVisualization();
-+TebVisualization(ros::NodeHandle& nh, const TebConfig& cfg)
-+void initialize(ros::NodeHandle& nh, const TebConfig& cfg);
-+void publishGlobalPlan(global_plan) const;
-+void publishLocalPlan(local_plan)
-+void publishLocalPlanAndPoses(const TimedElasticBand& teb)
-+void publishRobotFootprintModel(current_pose, robot_model, ns,color)
-+void publishInfeasibleRobotPose(current_pose, robot_model)
-+void publishObstacles(const ObstContainer& obstacles) const;
-+void publishViaPoints(via_points, ns) const;
-+void publishGraph(graph, ns);
-+void publishPathContainer(first, last, ns)
-+void publishTebContainer(teb_planner, ns)
-+void publishFeedbackMessage(teb_planners, selected_trajectory_idx, obstacles)
-+void publishFeedbackMessage(teb_planner, bstacles)
-+static std_msgs::ColorRGBA toColorMsg(a,r,g,b);
+-- public method --
+TebOptimalPlanner();
+TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(), TebVisualizationPtr visual = TebVisualizationPtr(), const ViaPointContainer* via_points = NULL)
+virtual ~TebOptimalPlanner();
+void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(), TebVisualizationPtr visual = TebVisualizationPtr(), const ViaPointContainer* via_points = NULL);
+void updateRobotModel(RobotFootprintModelPtr robot_model )
+virtual bool plan(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false);
+virtual bool plan(const tf::Pose& start, const tf::Pose& goal, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false);
+virtual bool plan(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false)
+virtual bool getVelocityCommand(double& vx, double& vy, double& omega, int look_ahead_poses) const;
+bool optimizeTEB(int iterations_innerloop, int iterations_outerloop, bool compute_cost_afterwards = false, double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false);
+void setVelocityStart(const geometry_msgs::Twist& vel_start);
+void setVelocityGoal(const geometry_msgs::Twist& vel_goal);
+void setVelocityGoalFree()
+void setObstVector(ObstContainer* obst_vector)
+const ObstContainer& getObstVector() const
+void setViaPoints(const ViaPointContainer* via_points)
+const ViaPointContainer& getViaPoints() const
+void setVisualization(TebVisualizationPtr visualization);
+virtual void visualize();
+virtual void clearPlanner()
+virtual void setPreferredTurningDir(RotType dir)
+static void registerG2OTypes();
+TimedElasticBand& teb()
+const TimedElasticBand& teb() const
+boost::shared_ptr<g2o::SparseOptimizer> optimizer()
+boost::shared_ptr<const g2o::SparseOptimizer> optimizer() const
+bool isOptimized() const
+bool hasDiverged() const override
+void computeCurrentCost(double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false);
+virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false)
+double getCurrentCost() const
+inline void extractVelocity(const PoseSE2& pose1, const PoseSE2& pose2, double dt, double& vx, double& vy, double& omega) const;
+void getVelocityProfile(std::vector<geometry_msgs::Twist>& velocity_profile) const;
+void getFullTrajectory(std::vector<TrajectoryPointMsg>& trajectory) const;
+virtual bool isTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec, double inscribed_radius = 0.0, double circumscribed_radius=0.0, int look_ahead_idx=-1);
 -- protected method --
-#bool printErrorWhenNotInitialized() const;
--- protected data --
-＃ros::Publisher global_plan_pub_
-＃ros::Publisher local_plan_pub_
-＃ros::Publisher teb_poses_pub_
-＃ros::Publisher teb_marker_pub_
-＃ros::Publisher feedback_pub_
-＃const TebConfig* cfg_
-＃bool initialized_
+bool buildGraph(double weight_multiplier=1.0);
+bool optimizeGraph(int no_iterations, bool clear_after=true);
+void clearGraph();
+void AddTEBVertices();
+void AddEdgesVelocity();
+void AddEdgesAcceleration();
+void AddEdgesTimeOptimal();
+void AddEdgesShortestPath();
+void AddEdgesObstacles(double weight_multiplier=1.0);
+void AddEdgesObstaclesLegacy(double weight_multiplier=1.0);
+void AddEdgesViaPoints();
+void AddEdgesDynamicObstacles(double weight_multiplier=1.0);
+void AddEdgesKinematicsDiffDrive()
+void AddEdgesKinematicsCarlike()
+void AddEdgesPreferRotDir();
+boost::shared_ptr<g2o::SparseOptimizer> initOptimizer();
+const TebConfig* cfg_;
+ObstContainer* obstacles_;
+const ViaPointContainer* via_points_;
+std::vector<ObstContainer> obstacles_per_vertex_;
+double cost_;
+RotType prefer_rotdir_;
+TebVisualizationPtr visualization_;
+TimedElasticBand teb_;
+RobotFootprintModelPtr robot_model_;
+boost::shared_ptr<g2o::SparseOptimizer> optimizer_;
+std::pair<bool, geometry_msgs::Twist> vel_start_;
+std::pair<bool, geometry_msgs::Twist> vel_goal_;
+bool initialized_;
+bool optimized_;
+}
+note top of TebOptimalPlanner : typedef boost::shared_ptr<TebOptimalPlanner> TebOptimalPlannerPtr;\ntypedef boost::shared_ptr<const TebOptimalPlanner> TebOptimalPlannerConstPtr;\ntypedef std::vector< TebOptimalPlannerPtr > TebOptPlannerContainer;
+
+PlannerInterface <|-- HomotopyClassPlanner
+PlannerInterface <|-- TebOptimalPlanner
+
+class TebLocalPlannerRos
+{
+-- public method --
+TebLocalPlannerROS();
+~TebLocalPlannerROS();
+void initialize(std::string name, tf2_ros::Buffer *tf, costmap_2d::Costmap2DROS* costmap_ros);
+bool setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan);
+bool computeVelocityCommands(geometry_msgs::Twist& cmd_vel);
+uint32_t computeVelocityCommands(const geometry_msgs::PoseStamped& pose, const geometry_msgs::TwistStamped& velocity, geometry_msgs::TwistStamped &cmd_vel, std::string &message)
+bool isGoalReached();
+bool isGoalReached(double xy_tolerance, double yaw_tolerance)
+bool cancel()
+static Eigen::Vector2d tfPoseToEigenVector2dTransRot(const tf::Pose& tf_vel);
+static RobotFootprintModelPtr getRobotFootprintFromParamServer(const ros::NodeHandle& nh);
+static Point2dContainer makeFootprintFromXMLRPC(XmlRpc::XmlRpcValue& footprint_xmlrpc, const std::string& full_param_name);
+static double getNumberFromXMLRPC(XmlRpc::XmlRpcValue& value, const std::string& full_param_name);
+-- protected method --
+void updateObstacleContainerWithCostmap();
+void updateObstacleContainerWithCostmapConverter();
+void updateObstacleContainerWithCustomObstacles();
+void updateViaPointsContainer(const std::vector<geometry_msgs::PoseStamped>& transformed_plan, double min_separation);
+void reconfigureCB(TebLocalPlannerReconfigureConfig& config, uint32_t level);
+void customObstacleCB(const costmap_converter::ObstacleArrayMsg::ConstPtr& obst_msg);
+void customViaPointsCB(const nav_msgs::Path::ConstPtr& via_points_msg);
+bool pruneGlobalPlan(const tf2_ros::Buffer& tf, const geometry_msgs::PoseStamped& global_pose, std::vector<geometry_msgs::PoseStamped>& global_plan, double dist_behind_robot=1);
+bool transformGlobalPlan()
+double estimateLocalGoalOrientation() const;
+void saturateVelocity()
+double convertTransRotVelToSteeringAngle(double v, double omega, double wheelbase, double min_turning_radius = 0) const;
+void validateFootprints(double opt_inscribed_radius, double costmap_inscribed_radius, double min_obst_dist);
+void configureBackupModes(std::vector<geometry_msgs::PoseStamped>& transformed_plan,  int& goal_idx);
+-- private method --
+costmap_2d::Costmap2DROS* costmap_ros_;
+costmap_2d::Costmap2D* costmap_;
+tf2_ros::Buffer* tf_;
+PlannerInterfacePtr planner_;
+ObstContainer obstacles_;
+ViaPointContainer via_points_;
+TebVisualizationPtr visualization_;
+boost::shared_ptr<base_local_planner::CostmapModel> costmap_model_;
+TebConfig cfg_;
+FailureDetector failure_detector_;
+std::vector<geometry_msgs::PoseStamped> global_plan_;
+base_local_planner::OdometryHelperRos odom_helper_;
+pluginlib::ClassLoader<costmap_converter::BaseCostmapToPolygons> costmap_converter_loader_;
+boost::shared_ptr<costmap_converter::BaseCostmapToPolygons> costmap_converter_;
+boost::shared_ptr< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> > dynamic_recfg_;
+ros::Subscriber custom_obst_sub_;
+boost::mutex custom_obst_mutex_;
+costmap_converter::ObstacleArrayMsg custom_obstacle_msg_;
+ros::Subscriber via_points_sub_;
+bool custom_via_points_active_;
+boost::mutex via_point_mutex_;
+PoseSE2 robot_pose_;
+PoseSE2 robot_goal_;
+geometry_msgs::Twist robot_vel_;
+bool goal_reached_;
+ros::Time time_last_infeasible_plan_;
+int no_infeasible_plans_;
+ros::Time time_last_oscillation_;
+RotType last_preferred_rotdir_;
+geometry_msgs::Twist last_cmd_;
+std::vector<geometry_msgs::Point> footprint_spec_;
+double robot_inscribed_radius_;
+double robot_circumscribed_radius;
+std::string global_frame_;
+std::string robot_base_frame_;
+std::string name_;
+bool initialized_;
+
 }
 
-
-
-TebVisualization *-- TebConfig
-
-
-
-
-
-
+}
 @enduml

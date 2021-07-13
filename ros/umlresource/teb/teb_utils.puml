@@ -1,0 +1,119 @@
+@startuml
+'https://plantuml.com/class-diagram
+namespace teb_local_planner{
+note top of Point2dContainer : typedef std::vector< Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> > Point2dContainer;
+class DistanceCalculations
+{
+Eigen::Vector2d closest_point_on_line_segment_2d()
+double distance_point_to_segment_2d()
+bool check_line_segments_intersection_2d()
+double distance_segment_to_segment_2d()
+double distance_point_to_polygon_2d()
+double distance_segment_to_polygon_2d()
+double distance_polygon_to_polygon_2d()
+double calc_distance_line_to_line_3d()
+double calc_distance_segment_to_segment3D()
+double calc_closest_point_to_approach_time()
+double calc_closest_point_to_approach_distance()
+double calc_distance_point_to_line()
+double calc_distance_point_to_segment()
+}
+
+note bottom of EquivalenceClass : using EquivalenceClassPtr = boost::shared_ptr<EquivalenceClass>;
+class EquivalenceClass
+{
+-- public method --
+EquivalenceClass()
+virtual ~EquivalenceClass()
+virtual bool isEqual(const EquivalenceClass& other) const
+virtual bool isValid() const
+virtual bool isReasonable() const
+}
+
+class HSignature
+{
+-- public method --
+HSignature(const TebConfig& cfg)
+void calculateHSignature(BidirIter path_start, BidirIter path_end, Fun fun_cplx_point, const ObstContainer* obstacles)
+virtual bool isEqual(const EquivalenceClass& other) const
+virtual bool isValid() const
+virtual bool isReasonable() const
+const std::complex<long double>& value() const
+-- private method --
+const TebConfig* cfg_;
+std::complex<long double> hsignature_;
+}
+
+class HSignature3d
+{
+-- public method --
+HSignature3d(const TebConfig& cfg)
+void calculateHSignature()
+virtual bool isEqual(const EquivalenceClass& other) const
+virtual bool isValid() const
+virtual bool isReasonable() const
+const std::vector<double>& values() const {return hsignature3d_;}
+-- private method --
+const TebConfig* cfg_;
+std::vector<double> hsignature3d_;
+}
+
+EquivalenceClass <|-- HSignature
+EquivalenceClass <|-- HSignature3d
+enum  RotType
+{
+left
+none
+right
+}
+
+class Misc
+{
+inline bool is_close(double a, double b, double epsilon = 1e-4)
+inline double average_angles(const std::vector<double>& angles)
+inline bool smaller_than_abs(double i, double j)
+inline double fast_sigmoid(double x)
+inline double distance_points2d(const P1& point1, const P2& point2)
+inline double cross2d(const V1& v1, const V2& v2)
+inline const T& get_const_reference(const T* ptr)
+}
+
+
+class TebOptimalPlanner
+note bottom of TebVisualizationPtr : typedef boost::shared_ptr<TebVisualization> TebVisualizationPtr;
+note top of TebVisualizationConstPtr : typedef boost::shared_ptr<const TebVisualization> TebVisualizationConstPtr;
+class TebVisualization
+{
+-- public method --
+TebVisualization()
+TebVisualization(ros::NodeHandle& nh, const TebConfig& cfg);
+void initialize(ros::NodeHandle& nh, const TebConfig& cfg);
+void publishGlobalPlan(const std::vector<geometry_msgs::PoseStamped>& global_plan) const;
+void publishLocalPlan(const std::vector<geometry_msgs::PoseStamped>& local_plan) const;
+void publishLocalPlanAndPoses(const TimedElasticBand& teb) const;
+void publishRobotFootprintModel()
+void publishInfeasibleRobotPose(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model);
+void publishObstacles(const ObstContainer& obstacles) const
+void publishViaPoints(const std::vector< Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> >& via_points, const std::string& ns = "ViaPoints") const;
+void publishGraph(const GraphType& graph, const std::string& ns_prefix = "Graph");
+void publishPathContainer(BidirIter first, BidirIter last, const std::string& ns = "PathContainer")
+void publishTebContainer(const std::vector< boost::shared_ptr<TebOptimalPlanner> >& teb_planner, const std::string& ns = "TebContainer");
+void publishFeedbackMessage(const std::vector< boost::shared_ptr<TebOptimalPlanner> >& teb_planners, unsigned it selected_trajectory_idx, const ObstContainer& obstacles);
+void publishFeedbackMessage(const TebOptimalPlanner& teb_planner, const ObstContainer& obstacles);
+static std_msgs::ColorRGBA toColorMsg(double a, double r, double g, double b);
+-- protected method --
+bool printErrorWhenNotInitialized() const;
+ros::Publisher global_plan_pub_;
+ros::Publisher local_plan_pub_;
+ros::Publisher teb_poses_pub_;
+ros::Publisher teb_marker_pub_;
+ros::Publisher feedback_pub_;
+const TebConfig* cfg_;
+bool initialized_;
+
+}
+
+
+
+}
+@enduml
