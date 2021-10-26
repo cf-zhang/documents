@@ -1,0 +1,175 @@
+@startuml
+'https://plantuml.com/class-diagram
+namespace nav2_core{
+class Recovery{
+-- public method --
+using Ptr = std::shared_ptr<Recovery>;
+virtual ~Recovery()
+virtual void configure(parent,name,tf,collision_checker) = 0;
+virtual void cleanup() = 0;
+virtual void activate() = 0;
+virtual void deactivate() = 0;
+// virtual bool executeRecovery() = 0;
+}
+}
+
+namespace recovery_server{
+class RecoveryServer{
+-- public method --
+RecoveryServer();
+~RecoveryServer();
+bool loadRecoveryPlugins();
+
+-- protected method --
+nav2_util::CallbackReturn on_configure(state) override;
+nav2_util::CallbackReturn on_activate(state) override;
+nav2_util::CallbackReturn on_deactivate(state) override;
+nav2_util::CallbackReturn on_cleanup(state) override;
+nav2_util::CallbackReturn on_shutdown(state) override;
+-- protected data --
+std::shared_ptr<tf2_ros::Buffer> tf_;
+std::shared_ptr<tf2_ros::TransformListener> transform_listener_;
+std::vector<pluginlib::UniquePtr<nav2_core::Recovery>> recoveries_;
+pluginlib::ClassLoader<nav2_core::Recovery> plugin_loader_;
+std::vector<std::string> default_ids_;
+std::vector<std::string> default_types_;
+std::vector<std::string> recovery_ids_;
+std::vector<std::string> recovery_types_;
+std::unique_ptr<nav2_costmap_2d::CostmapSubscriber> costmap_sub_;
+std::unique_ptr<nav2_costmap_2d::FootprintSubscriber> footprint_sub_;
+std::shared_ptr<nav2_costmap_2d::CostmapTopicCollisionChecker> collision_checker_;
+double transform_tolerance_;
+}
+
+
+LifecycleNode <-- RecoveryServer
+}
+
+
+namespace nav2_recoveries{
+enum Status{
+SUCCEEDED = 1,
+FAILED = 2,
+RUNNING = 3,
+}
+
+class Recovery<? ActionT>{
+-- public method --
+using ActionServer = nav2_util::SimpleActionServer<ActionT, LifecycleNode>;
+Recovery()
+virtual ~Recovery()
+virtual Status onRun(const std::shared_ptr<const typename ActionT::Goal> command) = 0;
+virtual Status onCycleUpdate() = 0;
+virtual void onConfigure()
+virtual void onCleanup()
+void configure(parent,name,tf,collision_checker) override
+void cleanup() override
+void activate() override
+void deactivate() override
+
+-- protected method --
+void execute()
+void stopRobot()
+
+-- protected data --
+rclcpp_lifecycle::LifecycleNode::SharedPtr node_;
+std::string recovery_name_;
+rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::Twist>::SharedPtr vel_pub_;
+std::shared_ptr<ActionServer> action_server_;
+std::shared_ptr<nav2_costmap_2d::CostmapTopicCollisionChecker> collision_checker_;
+std::shared_ptr<tf2_ros::Buffer> tf_;
+double cycle_frequency_;
+double enabled_;
+std::string global_frame_;
+std::string robot_base_frame_;
+double transform_tolerance_;
+rclcpp::Clock steady_clock_;
+}
+
+class Wait<WaitAction>{
+-- public method --
+Wait()
+~Wait()
+Status onRun(command) override
+Status onCycleUpdate() override
+-- protected data --
+std::chrono::time_point<std::chrono::steady_clock> wait_end_;
+WaitAction::Feedback::SharedPtr feedback_;
+}
+
+class Spin<SpinAction>{
+-- public method --
+Spin()
+~Spin()
+Status onRun(command) override
+void onConfigure() override
+void onCycleUpdate() override
+
+-- protected method --
+bool isCollisionFree(distance, cmd_vel, pose2d)
+
+-- protected data --
+SpinAction::Feedback::SharedPtr feedback_;
+double min_rotational_vel_;
+double max_rotational_vel_;
+double rotational_acc_lim_;
+double cmd_yaw_;
+double prev_yaw_;
+double relative_yaw_;
+double simulate_ahead_time_;
+}
+
+class BackUp<BackUpAction>{
+-- public method --
+BackUp()
+~BackUp()
+Status onRun((command) override
+Status onCycleUpdate() override
+
+-- protected method --
+bool isCollisionFree(distance, cmd_vel, pose2d);
+void onConfigure() override
+
+-- protected data --
+double min_linear_vel_;
+double max_linear_vel_;
+double linear_acc_lim_;
+geometry_msgs::msg::PoseStamped initial_pose_;
+double command_x_;
+double command_speed_;
+double simulate_ahead_time_;
+BackUpAction::Feedback::SharedPtr feedback_;
+}
+
+
+
+Recovery <-- Wait
+Recovery <-- Spin
+Recovery <-- BackUp
+}
+
+
+nav2_core.Recovery <-- nav2_recoveries.Recovery
+recovery_server.RecoveryServer *-- nav2_core.Recovery
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@enduml

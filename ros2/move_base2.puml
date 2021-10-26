@@ -1,0 +1,296 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class BaseController{
+-- public method --
+BaseController()
+~BaseController();
+void initialize(parent,tf, vel_publisher, body_cmd_publisher,trapped_ptr);
+bool getCurrentPose(geometry_msgs::msg::PoseStamped & odom_pose);
+bool transformPose(target_frame,in_pose,out_pose);
+bool approachOnlyRotate(target);
+bool interpolateToTarget(start,goal,result_v);
+void publishVelocity(command);
+-- private data --
+std::string name_;
+rclcpp_lifecycle::LifecycleNode::SharedPtr node_;
+std::shared_ptr<tf2_ros::Buffer> tf_;
+rclcpp::Clock::SharedPtr clock_;
+rclcpp::Logger logger_;
+rclcpp_lifecycle::LifecyclePublisher<>::SharedPtr vel_pub_;
+rclcpp_lifecycle::LifecyclePublisher<>::SharedPtr body_cmd_pub_;
+std::shared_ptr<move_base::TrappedRecovery> trapped_;
+}
+
+class LineIterator{
+-- public method --
+LineIterator(int x0, int y0, int x1, int y1)
+bool isValid()
+void advance()
+int getX()
+int getY()
+int getX0()
+int getY0()
+int getX1()
+int getY1()
+-- private data --
+int x0, y0, x1, y1;
+int x,y
+int deltax, deltay;
+int curpixel'
+int xinc1,xinc2,yinc1,yinc2
+int den,num,numadd,numpixels
+}
+
+class PointCost{
+-- public method --
+PointCost()
+~PointCost()
+void initialize(nh, costmap_ros)
+bool isValidPose(p, allow_unknow)
+unsigned char getPointCost(const p)
+bool collisionFreeCheck(path, sum_dist)
+-- private date --
+nav2_util::LifecycleNode::SharedPtr nh_;
+rclcpp::Logger logger_;
+std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros_;
+nav2_costmap_2d::Costmap2D * costmap_;
+double check_distance_;
+}
+
+class Reporter{
+-- public method --
+Reporter()
+~Reporter()
+void initialize(parent)
+void report(mode, status, description);
+-- private data --
+std::string name_;
+rclcpp_lifecycle::LifecycleNode::SharedPtr node_;
+rclcpp::Logger logger_;
+rclcpp_lifecycle::LifecyclePublisher<NavStatus>::SharedPtr reporter_pub_
+}
+
+class requestInfo{
+geometry_msgs::msg::PoseStamped goal;
+std::string planner_id;
+std::string controller_id;
+}
+
+enum NavState{
+UNACTIVE = 0,
+READY,
+PLANNING,
+CONTROLLING,
+WAITING,
+TRACKINGROTATERECOVERY,
+EXCEPTION,
+STOPPING
+}
+
+enum NavMode{
+NavMode_AB = 0,
+NavMode_Track,
+NavMode_STOP
+}
+
+class TrappedRecovery{
+-- public --
+TrappedRecovery();
+~TrappedRecovery();
+void initialize(nh,tf,costmap_ros);
+void setMode(int i);
+bool isTrapped();
+bool isTrappedInPose(double x, double y, double yaw);
+bool isUltrasonicCurrent();
+void transformFootprint(x,y,theta,footprint_spec,oriented_footprint);
+double lineCost(x0,x1,y0,y1);
+double scoreFootprint(oriented_footprint);
+bool transformPose(frame,in_pose,out_pose);
+double getPointCost(int x, int y);
+bool collisionFreeCheck(path, sum_dist);
+bool ultrasonicFrontFree();
+-- private method --
+void ultrasonicCallback(const ception_msgs::msg::Around::SharedPtr msg);
+-- private data --
+int mode_;
+std::string global_frame_;
+std::string base_frame_;
+std::shared_ptr<tf2_ros::Buffer> tf_;
+rclcpp_lifecycle::LifecycleNode::SharedPtr node_;
+rclcpp::Clock::SharedPtr clock_;
+std::shared_ptr<nav2_costmap_2d::Costmap2DROS> controller_costmap_;
+std::vector<geometry_msgs::msg::Point> footprint_;
+rclcpp::Logger logger_;
+rclcpp::Subscription<ception_msgs::msg::Around>::SharedPtr ultrasonic_sub_;
+sensor_msgs::msg::Range last_ultrasonic_range_;
+}
+
+class ReceiveGoalMb{
+-- public method --
+ReceiveGoalMb();
+~ReceiveGoalMb();
+
+-- private method --
+void srcPoseHandle(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
+bool transformPose(target_frame, in_pose, out_pose);
+void timerCallback();
+void publishMarker(geometry_msgs::msg::PoseStamped & pose, int type = 1);
+
+-- private data --
+rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr src_pose_sub_;
+std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+std::string target_frame_;
+bool start_tracking_;
+geometry_msgs::msg::PoseStamped prev_pose_;
+rclcpp::Client<automation_msgs::srv::NavigateToPose>::SharedPtr navi_to_client_;
+std::shared_ptr<automation_msgs::srv::NavigateToPose::Request> req_;
+std::mutex mutex_;
+std::vector<geometry_msgs::msg::PoseStamped> goals_vec_;
+rclcpp::TimerBase::SharedPtr timer_;
+rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr tracking_marker_pub_;
+}
+
+class MoveBase{
+-- public method --
+MoveBase();
+~MoveBase();
+using PlannerMap = std::unordered_map<std::string, nav2_core::GlobalPlanner::Ptr>;
+using ControllerMap = std::unordered_map<std::string, nav2_core::Controller::Ptr>;
+nav_msgs::msg::Path getPlan(start,goal,planner_id);
+void publishPlan(const nav_msgs::msg::Path & path);
+bool getRobotPose(geometry_msgs::msg::PoseStamped & pose);
+bool findControllerId(c_name, current_controller);
+void computeControl();
+void computeAndPublishVelocity();
+void publishVelocity(velocity);
+void publishZeroVelocity();
+bool isGoalReached();
+double getThresholdedVelocity(velocity, threshold)
+geometry_msgs::msg::Twist getThresholdedTwist(Twist & twist)
+void loop();
+void resetState();
+rclcpp::Service<NavMode>::SharedPtr get_mode_server_;
+rclcpp::Client<ListParameters>::SharedPtr param_client_;
+void getModeCallback(req,res);
+bool setControllerTrackingMode(bool enable);
+bool transformPose(target_frame, in_pose,out_pose);
+-- public data --
+std::string ns_;
+std::shared_ptr<PointCost> point_cost_;
+std::shared_ptr<TrappedRecovery> trapped_recovery_;
+-- protected method --
+void handleService(request,response);
+nav2_util::CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
+void spinThread();
+void planThread();
+-- protected data --
+NavState state_;
+std::atomic_bool is_cancel_;
+bool is_shutdown_;
+int navi_mode_;
+rclcpp::Service<NavigateToPose>::SharedPtr service_handle_;
+std::queue<requestInfo> goals_queue_;
+requestInfo current_request_;
+PlannerMap planners_;
+pluginlib::ClassLoader<nav2_core::GlobalPlanner> gp_loader_;
+std::vector<std::string> default_planner_ids_;
+std::vector<std::string> default_planner_types_;
+std::vector<std::string> planner_ids_;
+std::vector<std::string> planner_types_;
+rclcpp_lifecycle::LifecyclePublisher<>::SharedPtr plan_publisher_;
+double max_planner_duration_;
+std::string planner_ids_concat_;
+std::shared_ptr<nav2_costmap_2d::Costmap2DROS> global_costmap_ros_;
+std::unique_ptr<nav2_util::NodeThread> global_costmap_thread_;
+nav2_costmap_2d::Costmap2D * global_costmap_;
+nav_msgs::msg::Path last_global_plan_;
+rclcpp::Time last_nofity_plan_time_;
+rclcpp::Time last_valid_plan_time_;
+std::atomic_bool new_global_plan_;
+int failed_control_cnt_;
+std::shared_ptr<std::thread> plan_thread_;
+std::mutex planner_mutex_;
+std::condition_variable planner_cond_;
+bool run_planner_;
+std::shared_ptr<nav2_costmap_2d::Costmap2DROS> controller_costmap_ros_;
+std::unique_ptr<nav2_util::NodeThread> controller_costmap_thread_;
+rclcpp::Time last_valid_control_time_;
+std::unique_ptr<nav2_util::OdomSmoother> odom_sub_;
+std::string default_odom_topic_;
+LifecyclePublisher<Twist>::SharedPtr vel_publisher_;
+LifecyclePublisher<SE3VelocityCMD>::SharedPtr body_cmd_publisher_;
+pluginlib::ClassLoader<nav2_core::ProgressChecker> progress_checker_loader_;
+nav2_core::ProgressChecker::Ptr progress_checker_;
+std::string default_progress_checker_id_;
+std::string default_progress_checker_type_;
+std::string progress_checker_id_;
+std::string progress_checker_type_;
+pluginlib::ClassLoader<nav2_core::GoalChecker> goal_checker_loader_;
+nav2_core::GoalChecker::Ptr goal_checker_;
+std::string default_goal_checker_id_;
+std::string default_goal_checker_type_;
+std::string goal_checker_id_;
+std::string goal_checker_type_;
+pluginlib::ClassLoader<nav2_core::Controller> lp_loader_;
+ControllerMap controllers_;
+std::vector<std::string> default_controller_ids_;
+std::vector<std::string> default_controller_types_;
+std::vector<std::string> controller_ids_;
+std::vector<std::string> controller_types_;
+std::string controller_ids_concat_, current_controller_;
+double controller_frequency_;
+int period_;
+double min_x_velocity_threshold_;
+double min_y_velocity_threshold_;
+double min_theta_velocity_threshold_;
+geometry_msgs::msg::Pose end_pose_;
+rclcpp::Clock steady_clock_{RCL_STEADY_TIME};
+std::shared_ptr<tf2_ros::Buffer> tf_;
+std::shared_ptr<std::thread> spin_thread_;
+-- private method --
+void trackingPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
+void publishMarker(geometry_msgs::msg::PoseStamped & pose, int type = 1);
+void updateTrackingGoal();
+
+-- private data --
+Subscription<PoseStamped>::SharedPtr tracking_pose_sub_;
+Publisher<Marker>::SharedPtr tracking_marker_pub_
+geometry_msgs::msg::PoseStamped pre_tracking_pose_;
+geometry_msgs::msg::PoseStamped last_tracking_pose_in_camera_;
+std::shared_ptr<BaseController> base_controller_;
+std::shared_ptr<Reporter> reporter_;
+}
+
+class LifecycleServiceClient{
+-- public method --
+LifecycleServiceClient(const std::string & node_name)
+void init()
+unsigned int get_state(std::chrono::seconds time_out = 3s)
+bool change_state(std::uint8_t transition, std::chrono::seconds time_out = 4s)
+
+
+}
+
+
+
+BaseController *-- TrappedRecovery
+
+
+rclcpp::Node <-- ReceiveGoalMb
+
+athena_utils::LifecycleNode <-- MoveBase
+MoveBase *-- TrappedRecovery
+MoveBase *-- PointCost
+MoveBase *-- BaseController
+MoveBase *-- Reporter
+MoveBase *-- NavState
+
+
+
+@enduml

@@ -1,0 +1,83 @@
+@startuml
+'https://plantuml.com/class-diagram
+class kinematic{
+double max_vel_x_
+double max_vel_y_
+double max_vel_theta_
+double acc_lim_x_
+double acc_lim_y_
+double acc_lim_theta_
+double deacc_lim_x_
+double deacc_lim_y_
+double deacc_lim_theta_
+}
+enum State{
+Ready=0,
+ChangeToDockGait=1,
+SearchDock=2,
+Front=5,
+Dock=10,
+SitDown=15,
+Charging=20,
+Standup=25,
+UNDOCK=30,
+SLOWTROT=35
+}
+
+class PDController{
+-- public method --
+PDController();
+void setParameters(kP,kD,dt);
+void reset();
+double step(error,max_limit);
+-- private data --
+double kP_;
+double kD_;
+double previous_error_;
+double dt_;
+double intergral_
+}
+
+class OmniController{
+OmniController();
+~OmniController();
+bool getRobotPose(odom_pose);
+bool transformPose(target_frame, in_pose, out_pose);
+void publishVelocity(twist);
+bool approach(msg);
+bool approachOnlyRotate(target);
+void smoothVelocity(v, a, c);
+void targetCallback(msg);
+void dockTFpublish(msg);
+void dockService(req, res);
+void fsmThread();
+bool foundTarget(target);
+bool undock(target);
+bool changeGait(const std::string& gait);
+void parameterPub(bool is_dock_gait);
+-- private data --
+std::string name_;
+std::shared_ptr<Buffer> tf_;
+std::shared_ptr<TransformListener> tf_listener_;
+std::shared_ptr<TransformBroadcaster> tf_broadcaster_;
+rclcpp::Logger logger_;
+rclcpp::Publisher<Twist>::SharedPtr vel_pub_;
+rclcpp::Publisher<SE3VelocityCMD>::SharedPtr body_cmd_pub_;
+rclcpp::Subscription<PoseStamped>::SharedPtr target_sub_;
+geometry_msgs::msg::Twist last_speed_;
+bool reached_;
+State state_;
+int search_dock_cnt_;
+rclcpp::Service<SetBool>::SharedPtr dock_server_;
+std::shared_ptr<std::thread> fsm_thread_;
+rclcpp_action::Client<ChangeGait_T>::SharedPtr change_gait_client_;
+rclcpp::Publisher<Parameters>::SharedPtr para_change_pub_;
+}
+
+
+Node <-- OmniController
+OmniController *-- State
+
+
+
+@enduml

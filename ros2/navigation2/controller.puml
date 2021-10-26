@@ -1,0 +1,357 @@
+@startuml
+'https://plantuml.com/class-diagram
+page 2x2
+namespace nav2_core{
+class Controller{
+-- public method --
+using Ptr = std::shared_ptr<nav2_core::Controller>;
+virtual ~Controller()
+virtual void configure(LifecycleNode&,name,tf2_ros::Buffer&,Costmap2DROS&) = 0;
+virtual void cleanup() = 0;
+virtual void activate() = 0;
+virtual void deactivate() = 0;
+virtual void setPlan(const nav_msgs::msg::Path & path) = 0;
+virtual TwistStamped computeVelocityCommands(pose,velocity) = 0;
+}
+}
+
+namespace dwb_msgs{
+class CriticScore
+class LocalPlanEvaluation
+class Trajectory2D
+class TrajectoryScore
+
+class DebugLocalPlan
+class GenerateTrajectory
+class GenerateTwists
+class GetCriticScore
+class ScoreTrajectory
+}
+
+namespace nav_2d_msgs{
+class Path2D
+class Pose2D32
+class Pose2dStamped
+class Twist2D
+class Twist2D32
+class Twist2DStamped
+}
+
+namespace nav_2d_utils{
+class conversion{
+geometry_msgs::msg::Twist twist2Dto3D(const nav_2d_msgs::msg::Twist2D & cmd_vel_2d);
+nav_2d_msgs::msg::Twist2D twist3Dto2D(const geometry_msgs::msg::Twist & cmd_vel);
+nav_2d_msgs::msg::Pose2DStamped poseStampedToPose2D(const geometry_msgs::msg::PoseStamped & pose);
+geometry_msgs::msg::Pose2D poseToPose2D(const geometry_msgs::msg::Pose & pose);
+geometry_msgs::msg::Pose pose2DToPose(const geometry_msgs::msg::Pose2D & pose2d);
+geometry_msgs::msg::PoseStamped pose2DToPoseStamped(const nav_2d_msgs::msg::Pose2DStamped & pose2d);
+geometry_msgs::msg::PoseStamped pose2DToPoseStamped(pose2d,frame, stamp);
+nav_msgs::msg::Path posesToPath(const std::vector<geometry_msgs::msg::PoseStamped> & poses);
+nav_2d_msgs::msg::Path2D pathToPath2D(const nav_msgs::msg::Path & path);
+nav_msgs::msg::Path poses2DToPath(poses,frame, stamp);
+nav_msgs::msg::Path pathToPath(const nav_2d_msgs::msg::Path2D & path2d);
+}
+class OdomSubscriber{
+-- public method --
+explicit OdomSubscriber(nh,default_topic = "odom")
+inline nav_2d_msgs::msg::Twist2D getTwist()
+inline nav_2d_msgs::msg::Twist2DStamped getTwistStamped()
+--protected method --
+void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
+-- protected data --
+rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
+nav_2d_msgs::msg::Twist2DStamped odom_vel_;
+std::mutex odom_mutex_;
+}
+class parameters{
+param_t<?type> searchAndGetParam(nh,param_name, default_value)
+param_t<?type> loadParameterWithDeprecation(nh,current_name,old_name,default_value)
+void moveDeprecatedParameter(nh,current_name,old_name)
+void moveParameter(nh,old_name,current_name,default_value,should_delete)
+}
+class path_ops{
+Path2D adjustPlanResolution(global_plan_in,resolution)
+}
+class tf_helper{
+bool transformPose(tf,frame,in_pose,out_pose,transform_tolerance);
+}
+}
+
+
+namespace costmap_queue{
+
+class MapBaseQueue<? item_t>{
+explicit MapBasedQueue(bool reset_bins = true)
+virtual void reset()
+void enqueue(const double priority, item_t item)
+bool isEmpty()
+item_t & front()
+void pop()
+
+-- protected data --
+using ItemMap = std::map<double, std::vector<item_t>>;
+using ItemMapIterator = typename ItemMap::iterator;
+bool reset_bins_;
+ItemMap item_bins_;
+unsigned int item_count_;
+ItemMapIterator iter_;
+ItemMapIterator last_insert_iter_;
+}
+
+class CellData{
+-- public method --
+CellData(d, i, x, y, sx, sy)
+CellData()
+static unsigned absolute_difference(x, y)
+
+-- public data --
+double distance_;
+unsigned int index_;
+unsigned int x_, y_;
+unsigned int src_x_, src_y_;
+}
+
+class CostmapQueue{
+-- public method --
+explicit CostmapQueue(costmap, manhattan);
+void reset() override;
+void enqueueCell(unsigned int x, unsigned int y);
+CellData getNextCell();
+virtual bool validCellToQueue(const CellData & /*cell*/)
+-- public data --
+typedef std::shared_ptr<CostmapQueue> Ptr;
+-- protected method --
+void enqueueCell(index,cur_x,cur_y,src_x,src_y);
+void computeCache();
+inline double distanceLookup(cur_x,cur_y,src_x,src_y)
+
+-- protected data --
+nav2_costmap_2d::Costmap2D & costmap_;
+std::vector<bool> seen_;
+int max_distance_;
+bool manhattan_;
+std::vector<std::vector<double>> cached_distances_;
+int cached_max_distance_;
+}
+
+class LimitedCostmapQueue{
+-- public method --
+LimitedCostmapQueue(costmap, cell_distance_limit);
+bool validCellToQueue(const CellData & cell) override;
+}
+
+
+MapBaseQueue <-- CostmapQueue
+CostmapQueue *-- CellData
+CostmapQueue <-- LimitedCostmapQueue
+}
+
+
+namespace dwb_plugins{
+class KinematicParameters
+{
+-- public method --
+friend class KinematicsHandler;
+inline double getMinX()
+inline double getMaxX()
+inline double getAccX()
+inline double getDecelX()
+inline double getMinY()
+inline double getMaxY()
+inline double getAccY()
+inline double getDecelY()
+inline double getMinSpeedXY()
+inline double getMaxSpeedXY()
+inline double getMinTheta()
+inline double getMaxTheta()
+inline double getAccTheta()
+inline double getDecelTheta()
+inline double getMinSpeedTheta()
+inline double getMinSpeedXY_SQ()
+inline double getMaxSpeedXY_SQ()
+-- protected data --
+double min_vel_x_;
+double min_vel_y_;
+double max_vel_x_;
+double max_vel_y_;
+double max_vel_theta_;
+double min_speed_xy_;
+double max_speed_xy_;
+double min_speed_theta_;
+double acc_lim_x_;
+double acc_lim_y_;
+double acc_lim_theta_;
+double decel_lim_x_;
+double decel_lim_y_;
+double decel_lim_theta_;
+double min_speed_xy_sq_;
+double max_speed_xy_sq_;
+}
+
+class KinematicsHandler
+{
+-- public method --
+KinematicsHandler();
+~KinematicsHandler();
+void initialize(nh, plugin_name);
+inline KinematicParameters getKinematics()
+using Ptr = std::shared_ptr<KinematicsHandler>;
+-- protected method --
+void on_parameter_event_callback(const rcl_interfaces::msg::ParameterEvent::SharedPtr event);
+void update_kinematics(KinematicParameters kinematics);
+-- protected data --
+std::atomic<KinematicParameters *> kinematics_;
+rclcpp::AsyncParametersClient::SharedPtr parameters_client_;
+rclcpp::Subscription<ParameterEvent>::SharedPtr parameter_event_sub_;
+std::string plugin_name_;
+}
+
+}
+
+
+
+
+namespace dwb_core{
+class DWBLocalPlanner{
+-- public method --
+DWBLocalPlanner();
+void configure(node,tf,costmap_ros) override;
+virtual ~DWBLocalPlanner() {}
+void activate() override;
+void deactivate() override;
+void cleanup() override;
+void setPlan(path) override;
+TwistStamped computeVelocityCommands(pose,velocity) override;
+virtual TrajectoryScore scoreTrajectory(traj,best_score = -1);
+virtual Twist2DStamped computeVelocityCommands(pose,velocity,results);
+-- protected method --
+void prepareGlobalPlan(pose,transformed_plan,goal_pose,publish_plan);
+virtual TrajectoryScore coreScoringAlgorithm(pose,velocity,results);
+virtual Path2D transformGlobalPlan(pose);
+std::string resolveCriticClassName(std::string base_name);
+virtual void loadCritics();
+void loadBackwardsCompatibleParameters();
+-- protected data --
+nav_2d_msgs::msg::Path2D global_plan_;
+bool prune_plan_;
+double prune_distance_;
+bool debug_trajectory_details_;
+rclcpp::Duration transform_tolerance_{0, 0};
+bool shorten_transformed_plan_;
+rclcpp_lifecycle::LifecycleNode::SharedPtr node_;
+std::shared_ptr<tf2_ros::Buffer> tf_;
+std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros_;
+std::unique_ptr<DWBPublisher> pub_;
+std::vector<std::string> default_critic_namespaces_;
+pluginlib::ClassLoader<TrajectoryGenerator> traj_gen_loader_;
+TrajectoryGenerator::Ptr traj_generator_;
+pluginlib::ClassLoader<TrajectoryCritic> critic_loader_;
+std::vector<TrajectoryCritic::Ptr> critics_;
+std::string dwb_plugin_name_;
+bool short_circuit_trajectory_evaluation_;
+}
+
+class IllegalTrajectoryTracker{
+-- public method --
+IllegalTrajectoryTracker()
+void addIllegalTrajectory(const IllegalTrajectoryException & e);
+void addLegalTrajectory();
+std::map<std::pair<std::string, std::string>, double> getPercentages() const;
+std::string getMessage() const;
+-- protected data --
+std::map<std::pair<std::string, std::string>, unsigned int> counts_;
+unsigned int legal_count_, illegal_count_;
+}
+
+class DWBPublisher
+{
+-- public method --
+explicit DWBPublisher(node, plugin_name);
+nav2_util::CallbackReturn on_configure();
+nav2_util::CallbackReturn on_activate();
+nav2_util::CallbackReturn on_deactivate();
+nav2_util::CallbackReturn on_cleanup();
+bool shouldRecordEvaluation()
+void publishEvaluation(results);
+void publishLocalPlan(header,traj);
+void publishCostGrid(costmap_ros,critics);
+void publishGlobalPlan(const nav_2d_msgs::msg::Path2D plan);
+void publishTransformedPlan(const nav_2d_msgs::msg::Path2D plan);
+void publishLocalPlan(const nav_2d_msgs::msg::Path2D plan);
+-- protected method --
+void publishTrajectories(const dwb_msgs::msg::LocalPlanEvaluation & results);
+void publishGenericPlan(plan,pub,flag);
+bool publish_evaluation_;
+bool publish_global_plan_;
+bool publish_transformed_;
+bool publish_local_plan_;
+bool publish_trajectories_;
+bool publish_cost_grid_pc_;
+bool publish_input_params_;
+builtin_interfaces::msg::Duration marker_lifetime_;
+std::shared_ptr<LifecyclePublisher<dwb_msgs::msg::LocalPlanEvaluation>> eval_pub_;
+std::shared_ptr<LifecyclePublisher<nav_msgs::msg::Path>> global_pub_;
+std::shared_ptr<LifecyclePublisher<nav_msgs::msg::Path>> transformed_pub_;
+std::shared_ptr<LifecyclePublisher<nav_msgs::msg::Path>> local_pub_;
+std::shared_ptr<LifecyclePublisher<visualization_msgs::msg::MarkerArray>> marker_pub_;
+std::shared_ptr<LifecyclePublisher<sensor_msgs::msg::PointCloud>> cost_grid_pc_pub_;
+nav2_util::LifecycleNode::SharedPtr node_;
+std::string plugin_name_;
+}
+
+class TrajectoryCritic
+{
+-- public method --
+using Ptr = std::shared_ptr<dwb_core::TrajectoryCritic>;
+virtual ~TrajectoryCritic() {}
+void initialize(nh,name,ns,costmap_ros)
+virtual void onInit()
+virtual void reset() {}
+virtual bool prepare(pose,twist,pose,plan)
+virtual double scoreTrajectory(traj) = 0;
+virtual void debrief(const nav_2d_msgs::msg::Twist2D &) {}
+virtual void addCriticVisualization(sensor_msgs::msg::PointCloud &)
+std::string getName()
+virtual double getScale() const
+void setScale(const double scale)
+-- protected data --
+std::string name_;
+std::string dwb_plugin_name_;
+std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros_;
+double scale_;
+nav2_util::LifecycleNode::SharedPtr nh_;
+}
+
+class TrajectoryGenerator{
+-- public method --
+typedef std::shared_ptr<dwb_core::TrajectoryGenerator> Ptr;
+virtual ~TrajectoryGenerator()
+virtual void initialize(nh,plugin_name) = 0;
+virtual void reset()
+virtual void startNewIteration(current_velocity) = 0;
+virtual bool hasMoreTwists() = 0;
+virtual nav_2d_msgs::msg::Twist2D nextTwist() = 0;
+virtual std::vector<Twist2D> getTwists(current_velocity)
+virtual Trajectory2D generateTrajectory(start_pose,start_vel,cmd_vel) = 0;
+}
+
+class traj_utils
+{
+const Pose2D & getClosestPose(trajectory,time_offset);
+Pose2D projectPose(trajectory,time_offset);
+}
+
+
+DWBLocalPlanner *-- DWBPublisher
+DWBLocalPlanner o-- TrajectoryCritic
+DWBLocalPlanner *-- TrajectoryGenerator
+}
+
+
+
+nav2_core.Controller <-- dwb_core.DWBLocalPlanner
+
+
+
+
+@enduml

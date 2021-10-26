@@ -1,0 +1,12 @@
+@startuml
+'https://plantuml.com/class-diagram
+class GoalChecker{
+-- public method --
+typedef std::shared_ptr<nav2_core::GoalChecker> Ptr;
+virtual ~GoalChecker()
+virtual void initialize(nh,plugin_name) = 0;
+virtual void reset() = 0;
+virtual bool isGoalReached(query_pose,goal_pose,velocity) = 0;
+}
+
+@enduml

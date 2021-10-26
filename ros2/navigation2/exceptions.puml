@@ -1,0 +1,41 @@
+@startuml
+'https://plantuml.com/class-diagram
+namespace nav2_core{
+class PlannerException{
+-- public method --
+explicit PlannerException(const std::string description)
+using Ptr = std::shared_ptr<PlannerException>;
+}
+}
+
+
+
+namespace dwb_core{
+class PlannerTFException
+{
+-- public method --
+explicit PlannerTFException(const std::string description)
+}
+
+
+class IllegalTrajectoryException
+{
+-- public method --
+IllegalTrajectoryException(const std::string critic_name, const std::string description)
+std::string getCriticName() const {return critic_name_;}
+
+-- protected data --
+std::string critic_name_;
+}
+class NoLegalTrajectoriesException
+{
+public:
+  explicit NoLegalTrajectoriesException(const IllegalTrajectoryTracker & tracker)
+  IllegalTrajectoryTracker tracker_;
+}
+
+nav2_core.PlannerException <-- nav2_core.PlannerTFException
+nav2_core.PlannerException <-- nav2_core.IllegalTrajectoryException
+nav2_core.PlannerException <-- nav2_core.NoLegalTrajectoriesException
+}
+@enduml

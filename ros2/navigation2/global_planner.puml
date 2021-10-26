@@ -1,0 +1,14 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class GlobalPlanner{
+-- public method --
+using Ptr = std::shared_ptr<GlobalPlanner>;
+virtual ~GlobalPlanner()
+virtual void configure(parent,name,tf,costmap_ros) = 0;
+virtual void cleanup() = 0;
+virtual void activate() = 0;
+virtual void deactivate() = 0;
+virtual nav_msgs::msg::Path createPlan(start,goal) = 0;
+}
+@enduml
