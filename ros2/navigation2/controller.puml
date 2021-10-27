@@ -1,6 +1,5 @@
 @startuml
 'https://plantuml.com/class-diagram
-page 2x2
 namespace nav2_core{
 class Controller{
 -- public method --
@@ -142,7 +141,8 @@ bool validCellToQueue(const CellData & cell) override;
 
 
 MapBaseQueue <-- CostmapQueue
-CostmapQueue *-- CellData
+CostmapQueue o-- CellData
+CostmapQueue *-- Costmap2D
 CostmapQueue <-- LimitedCostmapQueue
 }
 
@@ -206,6 +206,91 @@ rclcpp::Subscription<ParameterEvent>::SharedPtr parameter_event_sub_;
 std::string plugin_name_;
 }
 
+class OneDVelocityIterator{
+-- public method --
+inline double projectVelocity(v0, accel, decel, dt, target)
+OneDVelocityIterator(current,min,max,acc_limit,decel_limit,acc_time,num_samples)
+double getVelocity() const
+void reset()
+bool isFinished() const
+OneDVelocityIterator & operator++()
+-- private data --
+bool return_zero_, return_zero_now_;
+double min_vel_, max_vel_;
+double current_;
+double increment_;
+}
+
+class VelocityIterator{
+-- public method --
+virtual ~VelocityIterator()
+virtual void initialize(nh, kinematics,plugin_name) = 0;
+virtual void startNewIteration(current_velocity, dt) = 0;
+virtual bool hasMoreTwists() = 0;
+virtual nav_2d_msgs::msg::Twist2D nextTwist() = 0;
+}
+
+class XYThetaIterator{
+-- public method --
+XYThetaIterator()
+void initialize(nh,kinematics,plugin_name) override;
+void startNewIteration(current_velocity,dt) override;
+bool hasMoreTwists() override;
+nav_2d_msgs::msg::Twist2D nextTwist() override;
+-- protected method --
+bool isValidSpeed(double x, double y, double theta);
+virtual bool isValidVelocity();
+void iterateToValidVelocity();
+-- protected data --
+int vx_samples_, vy_samples_, vtheta_samples_;
+KinematicsHandler::Ptr kinematics_handler_;
+std::shared_ptr<OneDVelocityIterator> x_it_, y_it_, th_it_;
+}
+
+class StandardTrajectoryGenerator{
+-- public method --
+void initialize(nh,plugin_name) override;
+void startNewIteration(current_velocity) override;
+bool hasMoreTwists() override;
+nav_2d_msgs::msg::Twist2D nextTwist() override;
+Trajectory2D generateTrajectory(start_pose,start_vel,cmd_vel) override;
+-- protected method --
+virtual void initializeIterator(const nav2_util::LifecycleNode::SharedPtr & nh);
+virtual Twist2D computeNewVelocity(cmd_vel, start_vel,dt);
+virtual geometry_msgs::msg::Pose2D computeNewPosition(start_pose, vel, dt);
+virtual std::vector<double> getTimeSteps(const nav_2d_msgs::msg::Twist2D & cmd_vel);
+-- protected data --
+KinematicsHandler::Ptr kinematics_handler_;
+std::shared_ptr<VelocityIterator> velocity_iterator_;
+double sim_time_;
+bool discretize_by_time_;
+double time_granularity_;
+double linear_granularity_;
+double angular_granularity_;
+std::string plugin_name_;
+bool include_last_point_;
+}
+class LimitedAccelGenerator{
+-- public method --
+void initialize(nh,plugin_name) override;
+void startNewIteration(current_velocity) override;
+
+-- protected method --
+Twist2D computeNewVelocity(cmd_vel,start_vel,dt) override;
+
+-- protected data --
+double acceleration_time_;
+std::string plugin_name_;
+
+}
+
+KinematicsHandler *-- KinematicParameters
+VelocityIterator <-- XYThetaIterator
+XYThetaIterator *-- KinematicsHandler
+XYThetaIterator *-- OneDVelocityIterator
+StandardTrajectoryGenerator *-- KinematicsHandler
+StandardTrajectoryGenerator *-- VelocityIterator
+StandardTrajectoryGenerator <-- LimitedAccelGenerator
 }
 
 
@@ -341,14 +426,233 @@ const Pose2D & getClosestPose(trajectory,time_offset);
 Pose2D projectPose(trajectory,time_offset);
 }
 
-
+TrajectoryCritic *-- Costmap2D
+DWBLocalPlanner *-- Costmap2D
 DWBLocalPlanner *-- DWBPublisher
-DWBLocalPlanner o-- TrajectoryCritic
+DWBLocalPlanner *-- TrajectoryCritic
 DWBLocalPlanner *-- TrajectoryGenerator
+}
+
+namespace dwb_critics{
+class LineIterator{
+-- public method --
+LineIterator(int x0, int y0, int x1, int y1)
+bool isValid() const
+void advance()
+int getX() const
+int getY() const
+int getX0() const
+int getY0() const
+int getX1() const
+int getY1() const
+-- private data --
+int x0_;
+int y0_;
+int x1_;
+int y1_;
+int x_;
+int y_;
+int deltax_;
+int deltay_;
+int curpixel_;
+int xinc1_, xinc2_, yinc1_, yinc2_;
+int den_, num_, numadd_, numpixels_;
+}
+class alignment_util{
+Pose2D getForwardPose(pose, distance);
+}
+
+class TwirlingCritic{
+-- public method --
+void onInit() override
+double scoreTrajectory(traj) override
+}
+
+class RotateToGoalCritic{
+-- public method --
+void onInit() override;
+void reset() override;
+bool prepare(pose, vel, goal, global_plan) override;
+double scoreTrajectory(traj) override;
+virtual double scoreRotation(traj);
+
+-- private data --
+bool in_window_;
+bool rotating_;
+double goal_yaw_;
+double xy_goal_tolerance_;
+double xy_goal_tolerance_sq_;
+double current_xy_speed_sq_, stopped_xy_velocity_sq_;
+double slowing_factor_;
+double lookahead_time_;
+}
+
+class PreferForwardCritic{
+-- public method --
+PreferForwardCritic()
+void onInit() override;
+double scoreTrajectory(traj) override;
+
+-- private data --
+double penalty_, strafe_x_, strafe_theta_, theta_scale_;
+}
+
+class BaseObstacleCritic{
+-- public method --
+void onInit() override;
+double scoreTrajectory(traj) override;
+void addCriticVisualization(pc) override;
+virtual double scorePose(const geometry_msgs::msg::Pose2D & pose);
+virtual bool isValidCost(const unsigned char cost);
+-- protected data --
+nav2_costmap_2d::Costmap2D * costmap_;
+bool sum_scores_;
+}
+
+class ObstacleFootprintCritic{
+-- public method --
+Footprint getOrientedFootprint(pose,footprint_spec);
+bool prepare(pose, vel, goal, global_plan) override;
+double scorePose(pose) override;
+virtual double scorePose(pose, oriented_footprint);
+double getScale() const override
+-- protected method --
+double lineCost(int x0, int x1, int y0, int y1);
+double pointCost(int x, int y);
+-- protected data --
+Footprint footprint_spec_;
 }
 
 
 
+
+class MapGridQueue{
+-- public method --
+MapGridQueue(nav2_costmap_2d::Costmap2D & costmap, MapGridCritic & parent)
+virtual ~MapGridQueue() = default;
+bool validCellToQueue(const costmap_queue::CellData & cell) override;
+-- protected data --
+MapGridCritic & parent_;
+}
+enum ScoreAggregationType{
+Last,
+Sum,
+Product
+}
+
+class MapGridCritic{
+-- public method --
+void onInit() override;
+double scoreTrajectory(const dwb_msgs::msg::Trajectory2D & traj) override;
+void addCriticVisualization(sensor_msgs::msg::PointCloud & pc) override;
+double getScale() const override
+virtual double scorePose(const geometry_msgs::msg::Pose2D & pose);
+inline double getScore(unsigned int x, unsigned int y)
+void setAsObstacle(unsigned int index);
+-- protected method --
+void reset() override;
+void propogateManhattanDistances();
+-- protected data --
+std::shared_ptr<MapGridQueue> queue_;
+nav2_costmap_2d::Costmap2D * costmap_;
+std::vector<double> cell_values_;
+double obstacle_score_, unreachable_score_;
+bool stop_on_failure_;
+ScoreAggregationType aggregationType_;
+}
+
+
+class GoalDistCritic{
+-- public method --
+bool prepare(pose,vel,goal,global_plan) override;
+
+-- protected method --
+bool getLastPoseOnCostmap(global_plan, x,y);
+}
+class GoalAlignCritic{
+-- public method --
+GoalAlignCritic()
+void onInit() override;
+bool prepare(pose, vel, goal, global_plan) override;
+double scorePose(const geometry_msgs::msg::Pose2D & pose) override;
+
+-- protected data --
+double forward_point_distance_;
+}
+
+class PathDistCritic{
+-- public method --
+bool prepare(pose, vel, goal, global_plan) override;
+}
+
+class PathAlignCritic{
+-- public method --
+PathAlignCritic()
+void onInit() override;
+bool prepare(pose, vel, goal, global_plan) override;
+double getScale() const override;
+double scorePose(const geometry_msgs::msg::Pose2D & pose) override;
+-- protected data --
+bool zero_scale_;
+double forward_point_distance_;
+}
+
+class CommandTrend{
+-- public method --
+CommandTrend();
+void reset();
+bool update(double velocity);
+bool isOscillating(double velocity);
+bool hasSignFlipped();
+-- private method --
+enum class Sign { ZERO, POSITIVE, NEGATIVE };
+Sign sign_;
+bool positive_only_, negative_only_;
+}
+
+class OscillationCritic{
+-- public method --
+OscillationCritic()
+void onInit() override;
+bool prepare(pose, vel, goal, global_plan) override;
+double scoreTrajectory(traj) override;
+void reset() override;
+void debrief(cmd_vel) override;
+-- private method --
+bool setOscillationFlags(const nav_2d_msgs::msg::Twist2D & cmd_vel);
+bool resetAvailable();
+-- private data --
+CommandTrend x_trend_, y_trend_, theta_trend_;
+double oscillation_reset_dist_, oscillation_reset_angle_, x_only_threshold_;
+rclcpp::Duration oscillation_reset_time_;
+double oscillation_reset_dist_sq_;
+geometry_msgs::msg::Pose2D pose_, prev_stationary_pose_;
+rclcpp::Time prev_reset_time_;
+}
+
+OscillationCritic *-- CommandTrend
+BaseObstacleCritic <-- ObstacleFootprintCritic
+BaseObstacleCritic *-- Costmap2D
+MapGridCritic *-- Costmap2D
+MapGridCritic *-- ScoreAggregationType
+MapGridCritic *-- MapGridQueue
+MapGridQueue *-- MapGridCritic
+MapGridCritic <-- GoalDistCritic
+GoalDistCritic <-- GoalAlignCritic
+MapGridCritic <-- PathDistCritic
+PathDistCritic <-- PathAlignCritic
+}
+
+
+dwb_core.TrajectoryCritic <-- dwb_critics.OscillationCritic
+costmap_queue.CostmapQueue <-- dwb_critics.MapGridQueue
+dwb_core.TrajectoryCritic <-- dwb_critics.MapGridCritic
+dwb_core.TrajectoryCritic <-- dwb_critics.PreferForwardCritic
+dwb_core.TrajectoryCritic <-- dwb_critics.RotateToGoalCritic
+dwb_core.TrajectoryCritic <-- dwb_critics.TwirlingCritic
+dwb_core.TrajectoryCritic <-- dwb_critics.BaseObstacleCritic
+
+dwb_core.TrajectoryGenerator <-- dwb_plugins.StandardTrajectoryGenerator
 nav2_core.Controller <-- dwb_core.DWBLocalPlanner
 
 
