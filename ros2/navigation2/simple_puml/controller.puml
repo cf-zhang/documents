@@ -1,0 +1,157 @@
+@startuml
+'https://plantuml.com/class-diagram
+namespace nav2_core{
+class Controller
+}
+
+namespace dwb_msgs{
+class CriticScore
+class LocalPlanEvaluation
+class Trajectory2D
+class TrajectoryScore
+
+class DebugLocalPlan
+class GenerateTrajectory
+class GenerateTwists
+class GetCriticScore
+class ScoreTrajectory
+}
+
+namespace nav_2d_msgs{
+class Path2D
+class Pose2D32
+class Pose2dStamped
+class Twist2D
+class Twist2D32
+class Twist2DStamped
+}
+
+namespace nav_2d_utils{
+class conversion
+class OdomSubscriber
+class parameters
+class path_ops
+class tf_helper
+}
+
+
+namespace costmap_queue{
+
+class MapBaseQueue<? item_t>
+
+class CellData
+
+class CostmapQueue
+
+class LimitedCostmapQueue{
+
+
+MapBaseQueue <-- CostmapQueue
+CostmapQueue o-- CellData
+CostmapQueue *-- Costmap2D
+CostmapQueue <-- LimitedCostmapQueue
+}
+
+
+namespace dwb_plugins{
+class KinematicParameters
+
+class KinematicsHandler
+
+class OneDVelocityIterator
+
+class VelocityIterator
+
+class XYThetaIterator
+
+class StandardTrajectoryGenerator
+class LimitedAccelGenerator
+
+KinematicsHandler *-- KinematicParameters
+VelocityIterator <-- XYThetaIterator
+XYThetaIterator *-- KinematicsHandler
+XYThetaIterator *-- OneDVelocityIterator
+StandardTrajectoryGenerator *-- KinematicsHandler
+StandardTrajectoryGenerator *-- VelocityIterator
+StandardTrajectoryGenerator <-- LimitedAccelGenerator
+}
+
+
+
+
+namespace dwb_core{
+class DWBLocalPlanner
+class IllegalTrajectoryTracker
+class DWBPublisher
+
+class TrajectoryCritic
+class TrajectoryGenerator
+class traj_utils
+TrajectoryCritic *-- Costmap2D
+DWBLocalPlanner *-- Costmap2D
+DWBLocalPlanner *-- DWBPublisher
+DWBLocalPlanner *-- TrajectoryCritic
+DWBLocalPlanner *-- TrajectoryGenerator
+}
+
+namespace dwb_critics{
+class LineIterator
+class alignment_util
+
+class TwirlingCritic
+
+class RotateToGoalCritic
+
+class PreferForwardCritic
+
+
+class BaseObstacleCritic
+
+
+class ObstacleFootprintCritic
+
+
+class MapGridQueue
+enum ScoreAggregationType
+class MapGridCritic
+
+
+class GoalDistCritic
+class GoalAlignCritic
+
+class PathDistCritic
+class PathAlignCritic
+
+class CommandTrend
+
+class OscillationCritic
+
+OscillationCritic *-- CommandTrend
+BaseObstacleCritic <-- ObstacleFootprintCritic
+BaseObstacleCritic *-- Costmap2D
+MapGridCritic *-- Costmap2D
+MapGridCritic *-- ScoreAggregationType
+MapGridCritic *-- MapGridQueue
+MapGridQueue *-- MapGridCritic
+MapGridCritic <-- GoalDistCritic
+GoalDistCritic <-- GoalAlignCritic
+MapGridCritic <-- PathDistCritic
+PathDistCritic <-- PathAlignCritic
+}
+
+
+dwb_core.TrajectoryCritic <-- dwb_critics.OscillationCritic
+costmap_queue.CostmapQueue <-- dwb_critics.MapGridQueue
+dwb_core.TrajectoryCritic <-- dwb_critics.MapGridCritic
+dwb_core.TrajectoryCritic <-- dwb_critics.PreferForwardCritic
+dwb_core.TrajectoryCritic <-- dwb_critics.RotateToGoalCritic
+dwb_core.TrajectoryCritic <-- dwb_critics.TwirlingCritic
+dwb_core.TrajectoryCritic <-- dwb_critics.BaseObstacleCritic
+
+dwb_core.TrajectoryGenerator <-- dwb_plugins.StandardTrajectoryGenerator
+nav2_core.Controller <-- dwb_core.DWBLocalPlanner
+
+
+
+
+@enduml

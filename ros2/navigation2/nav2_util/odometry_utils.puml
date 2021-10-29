@@ -1,0 +1,26 @@
+@startuml
+'https://plantuml.com/class-diagram
+namespace nav2_util{
+class OdomSmoother{
+-- public method --
+explicit OdomSmoother{hn, filter_duration, odom_topic)
+inline Twist getTwist()
+inline TwistStamped getTwistStamped()
+
+-- protected method --
+void odomCallback(msg)
+void updateState()
+
+-- protected data --
+rclcpp::Node::SharedPtr node_;
+rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
+nav_msgs::msg::Odometry odom_cumulate_;
+geometry_msgs::msg::TwistStamped vel_smooth_;
+std::mutex odom_mutex_;
+rclcpp::Duration odom_history_duration_;
+std::deque<nav_msgs::msg::Odometry> odom_history_;
+}
+
+}
+
+@enduml

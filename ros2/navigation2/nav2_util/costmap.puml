@@ -1,0 +1,50 @@
+@startuml
+'https://plantuml.com/class-diagram
+namespace nav2_util{
+
+enum TestCostmap{
+open_space,
+bounded,
+bottom_left_obstacle,
+top_left_obstacle,
+maze1,
+maze2
+}
+
+class costmap{
+-- public method --
+typedef uint8_t CostValue;
+Costmap(node,trinary_costmap,track_unknown_space , lethal_threshold , unknown_cost_value 1);
+Costmap() = delete;
+~Costmap();
+void set_static_map(const nav_msgs::msg::OccupancyGrid & occupancy_grid);
+void set_test_costmap(const TestCostmap & testCostmapType);
+nav2_msgs::msg::Costmap get_costmap(const nav2_msgs::msg::CostmapMetaData & specifications);
+nav2_msgs::msg::CostmapMetaData get_properties() {return costmap_properties_;}
+bool is_free(const unsigned int x_coordinate, const unsigned int y_coordinate) const;
+bool is_free(const unsigned int index) const;
+static const CostValue no_information;
+static const CostValue lethal_obstacle;
+static const CostValue inscribed_inflated_obstacle;
+static const CostValue medium_cost;
+static const CostValue free_space;
+
+-- private method --
+std::vector<uint8_t> get_test_data(const TestCostmap configuration);
+uint8_t interpret_value(const int8_t value) const;
+
+-- private data --
+rclcpp::Node * node_;
+nav2_msgs::msg::CostmapMetaData costmap_properties_;
+std::vector<uint8_t> costs_;
+bool trinary_costmap_;
+bool track_unknown_space_;
+int lethal_threshold_;
+int unknown_cost_value_;
+bool map_provided_;
+bool using_test_map_;
+}
+
+
+}
+@enduml

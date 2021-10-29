@@ -1,0 +1,15 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_util{
+class ClearEntirelyCostmapServiceClient<nav2_msgs::srv::ClearEntirelyCostmap>{
+-- public method --
+explicit ClearEntirelyCostmapServiceClient(service_name);
+using clearEntirelyCostmapServiceRequest = ServiceClient<ClearEntireCostmap>::RequestType;
+using clearEntirelyCostmapServiceResponse =ServiceClient<ClearEntireCostmap>::ResponseTyp
+}
+ServiceClient <-- ClearEntirelyCostmapServiceClient
+
+
+}
+@enduml

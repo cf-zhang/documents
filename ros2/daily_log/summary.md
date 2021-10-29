@@ -65,6 +65,7 @@ ros2 launch move_base2 navigation_launch_tb3.py
 ros2 run move_base2  lifecycle_client
 ```
 
+colcon build --cmake-args -DBUILD_TESTING=OFF
 
 
 

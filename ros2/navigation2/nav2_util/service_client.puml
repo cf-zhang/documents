@@ -1,0 +1,22 @@
+@startuml
+'https://plantuml.com/class-diagram
+namespace nav2_util{
+class ServiceClient<? ServiceT>
+{
+-- public method --
+explicit ServiceClient(service_name, provided_node)
+ServiceClient(service_name, parent_name)
+using RequestType = typename ServiceT::Request;
+using ResponseType = typename ServiceT::Response;
+typename ResponseType::SharedPtr invoke(request,timeout)
+bool invoke(request,response)
+void wait_for_service(timeout)
+
+-- protected data --
+std::string service_name_;
+rclcpp::Node::SharedPtr node_;
+typename rclcpp::Client<ServiceT>::SharedPtr client_;
+
+}
+}
+@enduml

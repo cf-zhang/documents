@@ -1,0 +1,12 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_util{
+class RobotUtils{
+-- public method --
+bool getCurrentPose(global_pose,tf_buffer, global_frame, robot_frame, transform_timeout);
+
+}
+
+}
+@enduml
