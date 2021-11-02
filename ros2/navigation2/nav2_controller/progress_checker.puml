@@ -1,0 +1,26 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_controller{
+
+class SimpleProgressChecker{
+-- public method --
+void initialize(node, plugin_name) override;
+bool check(current_pose) override;
+void reset() override;
+
+-- protected method --
+bool is_robot_moved_enough(const geometry_msgs::msg::Pose2D & pose);
+void reset_baseline_pose(const geometry_msgs::msg::Pose2D & pose);
+-- protected data --
+rclcpp_lifecycle::LifecycleNode::SharedPtr nh_;
+double radius_;
+rclcpp::Duration time_allowance_{0, 0};
+geometry_msgs::msg::Pose2D baseline_pose_;
+rclcpp::Time baseline_time_;
+bool baseline_pose_set_{false};
+}
+
+}
+nav2_core.ProgressChecker <-- nav2_controller.SimpleProgressChecker
+@enduml

@@ -1,5 +1,7 @@
 @startuml
 'https://plantuml.com/class-diagram
+
+namespace nav2_core{
 class ProgressChecker{
 -- public method --
 typedef std::shared_ptr<nav2_core::ProgressChecker> Ptr;
@@ -8,5 +10,5 @@ virtual void initialize(node,plugin_name) = 0;
 virtual bool check(current_pose) = 0;
 virtual void reset() = 0;
 }
-
+}
 @enduml

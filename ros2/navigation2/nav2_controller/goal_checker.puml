@@ -1,0 +1,33 @@
+@startuml
+'https://plantuml.com/class-diagram
+namespace nav2_controller{
+class SimpleGoalChecker{
+-- public method --
+SimpleGoalChecker();
+void initialize(nh, plugin_name) override;
+void reset() override;
+bool isGoalReached(query_pose, goal_pose, velocity) override;
+
+-- protected data --
+double xy_goal_tolerance_, yaw_goal_tolerance_;
+bool stateful_, check_xy_;
+double xy_goal_tolerance_sq_;
+}
+
+class StoppedGoalChecker
+{
+-- public method --
+StoppedGoalChecker();
+void initialize(nh, plugin_name) override;
+bool isGoalReached(query_pose, goal_pose, velocity) override;
+-- protected data --
+double rot_stopped_velocity_, trans_stopped_velocity_;
+};
+
+
+SimpleGoalChecker <-- StoppedGoalChecker
+}
+
+nav2_core.GoalChecker <-- nav2_controller.SimpleGoalChecker
+
+@enduml

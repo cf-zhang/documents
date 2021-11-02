@@ -1,0 +1,20 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_util{
+
+class DumpParams{
+-- public method --
+vector<string> get_param_names_for_node(node, node_name)
+std::vector<ParameterValue> get_param_values_for_node(node, node_name, param_names)
+static std::vector<rcl_interfaces::msg::ParameterDescriptor>
+get_param_descriptors_for_node(node, node_name, param_names)
+static std::string to_string( param_value)
+static void print_yaml(node_name, param_names,param_values,param_descriptors,verbose)
+tatic void print_markdown(node_name,param_names,param_values,param_descriptors, verbose)
+template<typename T> void validate(boost::any & v, values,option_sequence<T> * /*target_type*/, int)
+}
+
+}
+
+@enduml

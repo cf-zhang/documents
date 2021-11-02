@@ -1,0 +1,44 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_planner{
+class PlannerServer{
+-- public method --
+PlannerServer();
+~PlannerServer();
+using PlannerMap = std::unordered_map<std::string, nav2_core::GlobalPlanner::Ptr>;
+nav_msgs::msg::Path getPlan(start, goal, planner_id);
+-- protected method --
+nav2_util::CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
+using ActionT = nav2_msgs::action::ComputePathToPose;
+using ActionServer = nav2_util::SimpleActionServer<ActionT>;
+std::unique_ptr<ActionServer> action_server_;
+void computePlan();
+void publishPlan(const nav_msgs::msg::Path & path);
+-- protected data --
+PlannerMap planners_;
+pluginlib::ClassLoader<nav2_core::GlobalPlanner> gp_loader_;
+std::vector<std::string> default_ids_;
+std::vector<std::string> default_types_;
+std::vector<std::string> planner_ids_;
+std::vector<std::string> planner_types_;
+double max_planner_duration_;
+std::string planner_ids_concat_;
+rclcpp::Clock steady_clock_{RCL_STEADY_TIME};
+std::shared_ptr<tf2_ros::Buffer> tf_;
+std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros_;
+std::unique_ptr<nav2_util::NodeThread> costmap_thread_;
+nav2_costmap_2d::Costmap2D * costmap_;
+rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Path>::SharedPtr plan_publisher_;
+}
+
+
+}
+
+nav2_util.LifecycleNode <-- nav2_planner.PlannerServer
+
+@enduml

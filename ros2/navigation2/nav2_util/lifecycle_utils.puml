@@ -1,0 +1,14 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_util{
+class LifecycleUtils{
+-- public method --
+void startup_lifecycle_nodes(node_names, service_call_timeout, retries);
+void startup_lifecycle_nodes(nodes, service_call_timeout,retries)
+void reset_lifecycle_nodes(node_names,service_call_timeout,retries);
+void reset_lifecycle_nodes(nodes,service_call_timeout,retries)
+}
+
+}
+@enduml

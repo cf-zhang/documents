@@ -1,0 +1,14 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_util{
+
+class GeometryUtils{
+-- public method --
+inline geometry_msgs::msg::Quaternion orientationAroundZAxis(double angle)
+inline double euclidean_distance
+inline double euclidean_distance(pos1, pos2)
+inline double euclidean_distance(pos1,pos2)
+}
+}
+@enduml

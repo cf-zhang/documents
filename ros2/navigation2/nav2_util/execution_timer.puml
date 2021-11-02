@@ -1,0 +1,20 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+
+namespace nav2_util{
+class ExecutionTimer{
+-- public method --
+using Clock = std::chrono::high_resolution_clock;
+using nanoseconds = std::chrono::nanoseconds;
+void start() {start_ = Clock::now();}
+void end() {end_ = Clock::now();}
+nanoseconds elapsed_time() {return end_ - start_;}
+double elapsed_time_in_seconds()
+-- protected data --
+Clock::time_point start_;
+Clock::time_point end_;
+}
+}
+
+@enduml

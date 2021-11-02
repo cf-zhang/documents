@@ -1,0 +1,57 @@
+@startuml
+'https://plantuml.com/class-diagram
+namespace nav2_lifecycle_manager{
+class LifecycleManager{
+-- public method --
+using nav2_msgs::srv::ManageLifecycleNodes;
+LifecycleManager();
+~LifecycleManager();
+
+-- protected method --
+void managerCallback(request_header,request,response);
+void isActiveCallback(request_header,request,response);
+bool startup();
+bool shutdown();
+bool reset();
+bool pause();
+bool resume();
+void createLifecycleServiceClients();
+void shutdownAllNodes();
+void destroyLifecycleServiceClients();
+bool changeStateForNode(const std::string & node_name, std::uint8_t transition);
+bool changeStateForAllNodes(std::uint8_t transition);
+void message(const std::string & msg);
+-- protected data --
+rclcpp::Node::SharedPtr service_client_node_;
+rclcpp::Service<ManageLifecycleNodes>::SharedPtr manager_srv_;
+rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr is_active_srv_;
+std::map<std::string, std::shared_ptr<nav2_util::LifecycleServiceClient>> node_map_;
+std::map<std::uint8_t, std::string> transition_label_map_;
+std::unordered_map<std::uint8_t, std::uint8_t> transition_state_map_;
+std::vector<std::string> node_names_;
+bool autostart_;
+bool system_active_{false};
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+rclcpp::Node <-- LifecycleManager
+
+}
+
+@enduml

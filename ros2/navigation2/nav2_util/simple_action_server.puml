@@ -1,0 +1,61 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_util{
+class SimpleActionServer<?ActionT, ?nodeT>{
+-- public method --
+typedef std::function<void ()> ExecuteCallback;
+explicit SimpleActionServer(node,action_name,execute_callback,autostart,server_timeout)
+explicit SimpleActionServer(node_base_interface,node_clock_interface,node_logging_interface,
+node_waitables_interface, action_name,execute_callback, autostart,server_timeout)
+rclcpp_action::GoalResponse handle_goal(/*uuid*/, /*goal*/)
+rclcpp_action::CancelResponse handle_cancel(/*handle*/)
+void handle_accepted(handle)
+void work()
+void activate()
+void deactivate()
+bool is_running()
+bool is_server_active()
+bool is_preempt_requested() const
+const std::shared_ptr<const typename ActionT::Goal> accept_pending_goal()
+const std::shared_ptr<const typename ActionT::Goal> get_current_goal() const
+bool is_cancel_requested() const
+void terminate_all(result )
+void terminate_current(result)
+void succeeded_current(result)
+void publish_feedback(feedback)
+
+-- protected method --
+constexpr auto empty_result() const
+constexpr bool is_active(handle) const
+void terminate(handle,result)
+void info_msg(const std::string & msg) const
+void debug_msg(const std::string & msg) const
+void error_msg(const std::string & msg) const
+void warn_msg(const std::string & msg) const
+
+-- protected data --
+rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_interface_;
+rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock_interface_;
+rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_interface_;
+rclcpp::node_interfaces::NodeWaitablesInterface::SharedPtr node_waitables_interface_;
+std::string action_name_;
+ExecuteCallback execute_callback_;
+std::future<void> execution_future_;
+bool stop_execution_{false};
+mutable std::recursive_mutex update_mutex_;
+bool server_active_{false};
+bool preempt_requested_{false};
+std::chrono::milliseconds server_timeout_;
+std::shared_ptr<rclcpp_action::ServerGoalHandle<ActionT>> current_handle_;
+std::shared_ptr<rclcpp_action::ServerGoalHandle<ActionT>> pending_handle_;
+typename rclcpp_action::Server<ActionT>::SharedPtr action_server_;
+
+
+
+
+}
+
+
+}
+@enduml

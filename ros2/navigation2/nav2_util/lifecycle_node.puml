@@ -1,0 +1,37 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_util{
+class floating_point_range
+{
+double from_value;
+double to_value;
+double step;
+}
+
+class integer_range{
+int from_value;
+int to_value;
+int step;
+}
+
+class LifecycleNode{
+-- public method --
+using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
+void add_parameter(name, default_value, description,additional_constraints, read_only)
+void add_parameter(name, default_value, fp_range, description, additional_constraints, read_only)
+void add_parameter(name, default_value, int_range, description, additional_constraints, read_only)
+std::shared_ptr<nav2_util::LifecycleNode> shared_from_this()
+nav2_util::CallbackReturn on_error(const rclcpp_lifecycle::State & /*state*/)
+-- protected method --
+void print_lifecycle_node_notification();
+
+-- protected data --
+bool use_rclcpp_node_;
+rclcpp::Node::SharedPtr rclcpp_node_;
+std::unique_ptr<NodeThread> rclcpp_thread_;
+}
+
+rclcpp_lifecycle.LifecycleNode <-- LifecycleNode
+}
+@enduml

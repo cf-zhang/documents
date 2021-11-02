@@ -1,0 +1,19 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_util{
+class LifecycleServiceClient{
+-- public method --
+explicit LifecycleServiceClient(const std::string & lifecycle_node_name);
+LifecycleServiceClient(lifecycle_node_name, parent_node);
+void change_state(transition, timeout);
+bool change_state(std::uint8_t transition);
+uint8_t get_state(timeout);
+-- protected data --
+rclcpp::Node::SharedPtr node_;
+ServiceClient<lifecycle_msgs::srv::ChangeState> change_state_;
+ServiceClient<lifecycle_msgs::srv::GetState> get_state_;
+
+}
+}
+@enduml
