@@ -1,0 +1,28 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_behavior_tree{
+enum BtStatus{
+SUCCEEDED,
+FAILED,
+CANCELED
+}
+
+class BehaviorTreeEngine{
+-- public method --
+explicit BehaviorTreeEngine(const std::vector<std::string> & plugin_libraries);
+virtual ~BehaviorTreeEngine()
+BtStatus run(tree, onLoop, cancelRequested, loopTimeout);
+BT::Tree createTreeFromText(xml_string, blackboard);
+BT::Tree createTreeFromFile(file_path, blackboard);
+void addGrootMonitoring(tree, publisher_port, server_port, max_msg_per_second = 25);
+void resetGrootMonitor();
+void haltAllActions(root_node);
+-- protected data --
+BT::BehaviorTreeFactory factory_;
+std::unique_ptr<BT::PublisherZMQ> groot_monitor_;
+}
+
+
+}
+@enduml

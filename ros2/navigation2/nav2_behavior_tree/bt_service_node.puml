@@ -1,0 +1,42 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_behavior_tree{
+class BtServiceNode<?ServiceT>{
+-- public method --
+BtServiceNode(service_node_name,conf)
+BtServiceNode() = delete;
+virtual ~BtServiceNode()
+static BT::PortsList providedBasicPorts(BT::PortsList addition)
+static BT::PortsList providedPorts()
+BT::NodeStatus tick() override
+virtual void on_tick()
+virtual BT::NodeStatus check_future(future_result)
+virtual void on_wait_for_result()
+
+-- protected method --
+void increment_recovery_count()
+
+-- protected data --
+std::string service_name_, service_node_name_;
+typename std::shared_ptr<rclcpp::Client<ServiceT>> service_client_;
+std::shared_ptr<typename ServiceT::Request> request_;
+rclcpp::Node::SharedPtr node_;
+std::chrono::milliseconds server_timeout_;
+}
+
+class ClearEntireCostmapService<ClearEntireCostmap>{
+ClearEntireCostmapService(service_node_name,conf);
+void on_tick() override;
+}
+class ReinitializeGlobalLocalizationService<std_srvs::srv::Empty>{
+ReinitializeGlobalLocalizationService(service_node_name, conf);
+}
+
+BtServiceNode <-- ReinitializeGlobalLocalizationService
+BtServiceNode <-- ClearEntireCostmapService
+}
+
+BT.SyncActionNode <-- nav2_behavior_tree.BtServiceNode
+
+@enduml

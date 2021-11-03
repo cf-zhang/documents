@@ -1,0 +1,74 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_map_server{
+class MapMode{
+Trinary,
+Scale,
+Raw,
+-- public method --
+const char * map_mode_to_string(MapMode map_mode);
+MapMode map_mode_from_string(std::string map_mode_name);
+}
+
+
+class LoadParameters{
+std::string image_file_name;
+double resolution{0};
+std::vector<double> origin{0, 0, 0};
+double free_thresh;
+double occupied_thresh;
+MapMode mode;
+bool negate;
+}
+
+enum LOAD_MAP_STATUS
+{
+LOAD_MAP_SUCCESS,
+MAP_DOES_NOT_EXIST,
+INVALID_MAP_METADATA,
+INVALID_MAP_DATA
+}
+
+class SaveParameters
+{
+  std::string map_file_name{""};
+  std::string image_format{""};
+  double free_thresh{0.0};
+  double occupied_thresh{0.0};
+  MapMode mode{MapMode::Trinary};
+}
+
+class MapIO{
+LoadParameters loadMapYaml(const std::string & yaml_filename);
+void loadMapFromFile(const LoadParameters & load_parameters,nav_msgs::msg::OccupancyGrid & map);
+LOAD_MAP_STATUS loadMapFromYaml(const std::string & yaml_file,  nav_msgs::msg::OccupancyGrid & map);
+bool saveMapToFile(const nav_msgs::msg::OccupancyGrid & map, const SaveParameters & save_parameters);
+}
+
+class MapSaver{
+-- public method --
+MapSaver();
+~MapSaver();
+bool saveMapTopicToFile(map_topic, save_parameters);
+-- protected method --
+nav2_util::CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
+void saveMapCallback(request_header, request, response);
+-- protected data --
+std::shared_ptr<rclcpp::Duration> save_map_timeout_;
+double free_thresh_default_;
+double occupied_thresh_default_;
+bool map_subscribe_transient_local_;
+const std::string save_map_service_name_{"save_map"};
+rclcpp::Service<nav2_msgs::srv::SaveMap>::SharedPtr save_map_service_;
+}
+
+}
+
+nav2_util.LifecycleNode <-- nav2_map_server.MapSaver
+
+@enduml

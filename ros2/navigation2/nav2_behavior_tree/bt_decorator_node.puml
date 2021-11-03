@@ -1,0 +1,80 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_behavior_tree{
+class DistanceController
+{
+-- public method --
+DistanceController(name, conf);
+static BT::PortsList providedPorts()
+
+-- private method --
+BT::NodeStatus tick() override;
+-- private data --
+rclcpp::Node::SharedPtr node_;
+std::shared_ptr<tf2_ros::Buffer> tf_;
+double transform_tolerance_;
+geometry_msgs::msg::PoseStamped start_pose_;
+double distance_;
+std::string global_frame_;
+std::string robot_base_frame_;
+bool first_time_;
+}
+
+class GoalUpdater
+{
+-- public method --
+GoalUpdater(xml_tag_name, conf);
+static BT::PortsList providedPorts()
+
+-- private method --
+BT::NodeStatus tick() override;
+void callback_updated_goal(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
+-- private data --
+rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_sub_;
+geometry_msgs::msg::PoseStamped last_goal_received_;
+}
+
+class RateController
+{
+-- public method --
+RateController(name, conf);
+static BT::PortsList providedPorts()
+-- private method --
+BT::NodeStatus tick() override;
+-- private data --
+std::chrono::time_point<std::chrono::high_resolution_clock> start_;
+double period_;
+bool first_time_;
+}
+
+class SpeedController
+{
+-- public method --
+SpeedController(name, conf);
+static BT::PortsList providedPorts()
+-- private method --
+BT::NodeStatus tick() override;
+inline double getScaledRate(const double & speed)
+inline void updatePeriod()
+-- private data --
+rclcpp::Node::SharedPtr node_;
+rclcpp::Time start_;
+std::shared_ptr<nav2_util::OdomSmoother> odom_smoother_;
+bool first_tick_;
+double period_;
+double min_rate_;
+double max_rate_;
+double d_rate_;
+double min_speed_;
+double max_speed_;
+double d_speed_;
+geometry_msgs::msg::PoseStamped goal_;
+}
+
+}
+BT.DecoratorNode <-- nav2_behavior_tree.SpeedController
+BT.DecoratorNode <-- nav2_behavior_tree.RateController
+BT.DecoratorNode <-- nav2_behavior_tree.DistanceController
+BT.DecoratorNode <-- nav2_behavior_tree.GoalUpdater
+@enduml

@@ -1,0 +1,52 @@
+@startuml
+'https://plantuml.com/class-diagram
+namespace nav2_behavior_tree{
+
+class PipelineSequence
+{
+-- public method --
+explicit PipelineSequence(const std::string & name);
+PipelineSequence(name, config);
+void halt() override;
+static BT::PortsList providedPorts()
+protected:
+  BT::NodeStatus tick() override;
+  std::size_t last_child_ticked_ = 0;
+}
+
+class RecoveryNode
+{
+-- public method --
+RecoveryNode(name,conf);
+~RecoveryNode() override = default;
+static BT::PortsList providedPorts()
+-- private method --
+BT::NodeStatus tick() override;
+void halt() override;
+-- private data --
+unsigned int current_child_idx_;
+unsigned int number_of_retries_;
+unsigned int retry_count_;
+}
+
+class RoundRobinNode
+{
+-- public method --
+explicit RoundRobinNode(const std::string & name);
+RoundRobinNode(const std::string & name, const BT::NodeConfiguration & config);
+BT::NodeStatus tick() override;
+void halt() override;
+static BT::PortsList providedPorts()
+-- private data --
+unsigned int current_child_idx_
+unsigned int num_failed_children_
+}
+
+
+}
+
+BT.ControlNode <-- nav2_behavior_tree.RoundRobinNode
+BT.ControlNode <-- nav2_behavior_tree.RecoveryNode
+BT.ControlNode <-- nav2_behavior_tree.PipelineSequence
+
+@enduml

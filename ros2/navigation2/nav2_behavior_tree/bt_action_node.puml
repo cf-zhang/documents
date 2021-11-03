@@ -1,0 +1,105 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_behavior_tree{
+class BtActionNode<?ActionT>{
+-- public method --
+BtActionNode(xml_tag_name,action_name,conf)
+BtActionNode() = delete;
+virtual ~BtActionNode()
+void createActionClient(const std::string & action_name)
+static BT::PortsList providedBasicPorts(BT::PortsList addition)
+static BT::PortsList providedPorts()
+virtual void on_tick()
+virtual void on_wait_for_result()
+virtual BT::NodeStatus on_success()
+virtual BT::NodeStatus on_aborted()
+virtual BT::NodeStatus on_cancelled()
+BT::NodeStatus tick() override
+void halt() override
+-- protected method --
+bool should_cancel_goal()
+void on_new_goal_received()
+void increment_recovery_count()
+
+-- protected data --
+std::string action_name_;
+typename std::shared_ptr<rclcpp_action::Client<ActionT>> action_client_;
+typename ActionT::Goal goal_;
+bool goal_updated_{false};
+bool goal_result_available_{false};
+typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr goal_handle_;
+typename rclcpp_action::ClientGoalHandle<ActionT>::WrappedResult result_;
+rclcpp::Node::SharedPtr node_;
+std::chrono::milliseconds server_timeout_;
+}
+
+class BackUpAction<BackUp>{
+-- public method --
+BackUpAction(xml_tag_name, action_name, conf);
+void on_tick() override;
+static BT::PortsList providedPorts()
+}
+
+class ComputePathToPoseAction<ComputePathToPose>{
+-- public method --
+ComputePathToPoseAction(xml_tag_name, action_name, conf);
+void on_tick() override;
+BT::NodeStatus on_success() override;
+static BT::PortsList providedPorts()
+-- private data --
+bool first_time_
+}
+
+class FollowPathAction<FollowPath>{
+-- public method --
+FollowPathAction(xml_tag_name,action_name,conf);
+void on_tick() override;
+void on_wait_for_result() override;
+static BT::PortsList providedPorts()
+}
+
+class NavigateToPoseAction<NavigateToPose>{
+-- public method --
+NavigateToPoseAction(xml_tag_name,action_name,conf);
+void on_tick() override;
+static BT::PortsList providedPorts()
+}
+
+class SpinAction<Spin>{
+-- public method --
+SpinAction(xml_tag_name,action_name,conf);
+void on_tick() override;
+static BT::PortsList providedPorts()
+}
+
+class TruncatePath{
+-- public method --
+TruncatePath(xml_tag_name,conf);
+static BT::PortsList providedPorts()
+-- private method --
+void halt() override
+BT::NodeStatus tick()
+-- private data --
+double distance_;
+}
+class WaitAction<Wait>
+{
+-- public method --
+WaitAction(xml_tag_name, action_name, conf);
+void on_tick() override;
+static BT::PortsList providedPorts()
+}
+
+BtActionNode <-- WaitAction
+BtActionNode <-- SpinAction
+BtActionNode <-- NavigateToPoseAction
+BtActionNode <-- FollowPathAction
+BtActionNode <-- ComputePathToPoseAction
+BtActionNode <-- BackUpAction
+
+}
+BT.ActionNodeBase <-- nav2_behavior_tree.BtActionNode
+BT.ActionNodeBase <-- nav2_behavior_tree.TruncatePath
+
+@enduml

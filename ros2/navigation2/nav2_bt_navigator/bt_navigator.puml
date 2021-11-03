@@ -1,0 +1,59 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_bt_navigator{
+
+class RosTopicLogger{
+-- public method --
+RosTopicLogger(ros_node, tree)
+void callback(timestamp,node, prev_status, status) override;
+void flush() override;
+-- protected data --
+rclcpp::Node::SharedPtr ros_node_;
+rclcpp::Publisher<nav2_msgs::msg::BehaviorTreeLog>::SharedPtr log_pub_;
+std::vector<nav2_msgs::msg::BehaviorTreeStatusChange> event_log_;
+}
+
+class BtNavigator{
+-- public method --
+BtNavigator();
+~BtNavigator();
+-- protected method --
+nav2_util::CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
+using Action = nav2_msgs::action::NavigateToPose;
+using ActionServer = nav2_util::SimpleActionServer<Action>;
+void navigateToPose();
+void initializeGoalPose();
+void onGoalPoseReceived(const geometry_msgs::msg::PoseStamped::SharedPtr pose);
+bool loadBehaviorTree(const std::string & bt_id);
+-- protected data --
+std::unique_ptr<ActionServer> action_server_;
+rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_sub_;
+BT::Tree tree_;
+BT::Blackboard::Ptr blackboard_;
+std::string current_bt_xml_filename_;
+std::string default_bt_xml_filename_;
+std::unique_ptr<nav2_behavior_tree::BehaviorTreeEngine> bt_;
+std::vector<std::string> plugin_lib_names_;
+rclcpp_action::Client<Action>::SharedPtr self_client_;
+rclcpp::Node::SharedPtr client_node_;
+std::shared_ptr<tf2_ros::Buffer> tf_;
+std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+rclcpp::Time start_time_;
+std::string robot_frame_;
+std::string global_frame_;
+double transform_tolerance_;
+}
+
+}
+
+
+
+nav2_util.LifecycleNode <-- nav2_bt_navigator.BtNavigator
+BT.StatusChangeLogger <-- nav2_bt_navigator.RosTopicLogger
+
+@enduml

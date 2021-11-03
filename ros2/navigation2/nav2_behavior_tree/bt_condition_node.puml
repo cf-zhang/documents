@@ -1,0 +1,139 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_behavior_tree{
+class DistanceTraveledCondition{
+-- public method --
+DistanceTraveledCondition(condition_name,conf);
+DistanceTraveledCondition() = delete;
+BT::NodeStatus tick() override;
+static BT::PortsList providedPorts()
+
+-- private data --
+rclcpp::Node::SharedPtr node_;
+std::shared_ptr<tf2_ros::Buffer> tf_;
+geometry_msgs::msg::PoseStamped start_pose_;
+double distance_;
+double transform_tolerance_;
+std::string global_frame_;
+std::string robot_base_frame_;
+}
+
+class GoalReachedCondition{
+-- public method --
+GoalReachedCondition(condition_name,conf);
+GoalReachedCondition() = delete;
+~GoalReachedCondition() override;
+BT::NodeStatus tick() override;
+void initialize();
+bool isGoalReached();
+static BT::PortsList providedPorts()
+-- protected method --
+void cleanup()
+-- private data --
+rclcpp::Node::SharedPtr node_;
+std::shared_ptr<tf2_ros::Buffer> tf_;
+bool initialized_;
+double goal_reached_tol_;
+std::string global_frame_;
+std::string robot_base_frame_;
+double transform_tolerance_;
+}
+
+class GoalUpdatedCondition{
+-- public method --
+public:
+GoalUpdatedCondition(condition_name,conf);
+GoalUpdatedCondition() = delete;
+BT::NodeStatus tick() override;
+static BT::PortsList providedPorts()
+-- private data --
+geometry_msgs::msg::PoseStamped goal_;
+}
+
+class InitialPoseReceived{
+-- public method --
+BT::NodeStatus initialPoseReceived(BT::TreeNode & tree_node);
+}
+
+class IsBatteryLowCondition{
+-- public method --
+IsBatteryLowCondition(condition_name, conf);
+IsBatteryLowCondition() = delete;
+BT::NodeStatus tick() override;
+static BT::PortsList providedPorts()
+
+-- private method --
+void batteryCallback(sensor_msgs::msg::BatteryState::SharedPtr msg);
+-- private data --
+rclcpp::Node::SharedPtr node_;
+rclcpp::Subscription<sensor_msgs::msg::BatteryState>::SharedPtr battery_sub_;
+std::string battery_topic_;
+double min_battery_;
+bool is_voltage_;
+bool is_battery_low_;
+std::mutex mutex_;
+}
+
+class IsStuckCondition{
+-- public method --
+IsStuckCondition(condition_name,conf);
+IsStuckCondition() = delete;
+~IsStuckCondition() override;
+void onOdomReceived(const typename nav_msgs::msg::Odometry::SharedPtr msg);
+BT::NodeStatus tick() override;
+void logStuck(const std::string & msg) const;
+void updateStates();
+bool isStuck();
+static BT::PortsList providedPorts()
+-- private data --
+rclcpp::Node::SharedPtr node_;
+std::atomic<bool> is_stuck_;
+rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
+std::deque<nav_msgs::msg::Odometry> odom_history_;
+std::deque<nav_msgs::msg::Odometry>::size_type odom_history_size_;
+double current_accel_;
+double brake_accel_limit_;
+}
+
+class TimeExpiredCondition{
+-- public meethod --
+TimeExpiredCondition(condition_name, conf);
+TimeExpiredCondition() = delete;
+BT::NodeStatus tick() override;
+static BT::PortsList providedPorts()
+-- private data --
+rclcpp::Node::SharedPtr node_;
+rclcpp::Time start_;
+double period_;
+}
+
+class TransformAvailableCondition{
+public:
+TransformAvailableCondition(condition_name, conf);
+TransformAvailableCondition() = delete;
+~TransformAvailableCondition();
+BT::NodeStatus tick() override;
+static BT::PortsList providedPorts()
+
+-- private data --
+rclcpp::Node::SharedPtr node_;
+std::shared_ptr<tf2_ros::Buffer> tf_;
+std::atomic<bool> was_found_;
+std::string child_frame_;
+std::string parent_frame_;
+}
+
+
+}
+
+BT.ConditionNode <-- nav2_behavior_tree.TransformAvailableCondition
+BT.ConditionNode <-- nav2_behavior_tree.TimeExpiredCondition
+BT.ConditionNode <-- nav2_behavior_tree.IsStuckCondition
+BT.ConditionNode <-- nav2_behavior_tree.IsBatteryLowCondition
+BT.ConditionNode <-- nav2_behavior_tree.GoalUpdatedCondition
+BT.ConditionNode <-- nav2_behavior_tree.GoalReachedCondition
+BT.ConditionNode <-- nav2_behavior_tree.DistanceTraveledCondition
+
+
+@enduml

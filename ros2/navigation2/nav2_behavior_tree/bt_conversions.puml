@@ -1,0 +1,12 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace BT{
+class BtConversions{
+-- public method --
+template<> inline geometry_msgs::msg::Point convertFromString(const StringView key)
+template<> inline geometry_msgs::msg::Quaternion convertFromString(const StringView key)
+template<> inline std::chrono::milliseconds convertFromString<std::chrono::milliseconds>(const StringView key)
+}
+}
+@enduml
