@@ -66,9 +66,39 @@ bool map_subscribe_transient_local_;
 const std::string save_map_service_name_{"save_map"};
 rclcpp::Service<nav2_msgs::srv::SaveMap>::SharedPtr save_map_service_;
 }
+MapSaver *-- MapIO
+MapIO *-- SaveParameters
+MapIO *-- LoadParameters
+
+class MapServer
+{
+-- public method --
+MapServer();
+~MapServer();
+-- protected method --
+nav2_util::CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
+bool loadMapResponseFromYaml(const std::string & yaml_file, response);
+void updateMsgHeader();
+void getMapCallback(request_header, request, response);
+void loadMapCallback(request_header, request, response);
+const std::string service_name_{"map"};
+const std::string load_map_service_name_{"load_map"};
+rclcpp::Service<nav_msgs::srv::GetMap>::SharedPtr occ_service_;
+rclcpp::Service<nav2_msgs::srv::LoadMap>::SharedPtr load_map_service_;
+rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::OccupancyGrid>::SharedPtr occ_pub_;
+std::string frame_id_;
+nav_msgs::msg::OccupancyGrid msg_;
+}
+
+MapServer *-- MapIO
 
 }
 
 nav2_util.LifecycleNode <-- nav2_map_server.MapSaver
+nav2_util.LifecycleNode <-- nav2_map_server.MapServer
 
 @enduml

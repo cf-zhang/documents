@@ -1,0 +1,156 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+namespace nav2_costmap_2d{
+class ArrayParser{
+-- public method --
+vector<vector<float>> parseVVF(input, error_return);
+}
+enum CostValues{
+NO_INFORMATION = 255,
+LETHAL_OBSTACLE = 254,
+INSCRIBED_INFLATED_OBSTACLE = 253,
+FREE_SPACE = 0
+}
+class CollisionCheckerException{
+-- public method --
+explicit CollisionCheckerException(const std::string description)
+}
+class IllegalPoseException
+{
+-- public method --
+IllegalPoseException(const std::string name, const std::string description)
+-- protected data --
+std::string name_;
+}
+CollisionCheckerException <-- IllegalPoseException
+class CostmapMath{
+inline double sign(double x)
+inline double sign0(double x)
+inline double distance(double x0, double y0, double x1, double y1)
+double distanceToLine(pX, pY, x0, y0, x1, y1);
+bool intersects(std::vector<Point> & polygon, float testx, float testy);
+bool intersects(polygon1, polygon2);
+}
+class footprint{
+void calculateMinAndMaxDistances(footprint, min_dist, max_dist);
+geometry_msgs::msg::Point toPoint(geometry_msgs::msg::Point32 pt);
+geometry_msgs::msg::Point32 toPoint32(geometry_msgs::msg::Point pt);
+geometry_msgs::msg::Polygon toPolygon(std::vector<geometry_msgs::msg::Point> pts);
+std::vector<geometry_msgs::msg::Point> toPointVector(:Polygon::SharedPtr polygon);
+void transformFootprint(x,y,theta,footprint_spec,oriented_footprint);
+void transformFootprint(x,y,theta,footprint_spec,oriented_footprint);
+void padFootprint(std::vector<geometry_msgs::msg::Point> & footprint, double padding);
+std::vector<geometry_msgs::msg::Point> makeFootprintFromRadius(double radius);
+bool makeFootprintFromString(footprint_string,footprint);
+}
+class FootprintSubscriber{
+-- public method --
+FootprintSubscriber(node, topic_name, footprint_timeout);
+FootprintSubscriber(node, topic_name, footprint_timeout);
+FootprintSubscriber(node_base, node_topics, node_logging, node_clock, topic_name, footprint_timeout);
+~FootprintSubscriber() {}
+bool getFootprint(footprint, valid_footprint_timeout);
+bool getFootprint(std::vector<geometry_msgs::msg::Point> & footprint);
+bool getFootprint(footprint, stamp,  valid_footprint_timeout);
+-- protected method --
+void footprint_callback(const geometry_msgs::msg::PolygonStamped::SharedPtr msg);
+-- protected data --
+rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_;
+rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics_;
+rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_;
+rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock_;
+void footprint_callback(const geometry_msgs::msg::PolygonStamped::SharedPtr msg);
+std::string topic_name_;
+bool footprint_received_{false};
+rclcpp::Duration footprint_timeout_;
+geometry_msgs::msg::PolygonStamped::SharedPtr footprint_;
+rclcpp::Subscription<geometry_msgs::msg::PolygonStamped>::SharedPtr footprint_sub_;
+
+}
+
+
+
+class Costmap{
+
+}
+
+class Costmap2D{
+
+}
+
+class Costmap2DROS{
+
+}
+
+
+
+
+class ClearCostmapService{
+-- public method --
+ClearCostmapService(node, costmap);
+ClearCostmapService() = delete;
+void clearExceptRegion(double reset_distance);
+void clearAroundRobot( window_size_x, window_size_y);
+void clearEntirely();
+
+-- private method --
+void clearExceptRegionCallback(request_header, request, response);
+void clearAroundRobotCallback(request_header, request, response);
+void clearEntireCallback(request_header, request, response);
+void clearLayerExceptRegion(costmap, pose_x, pose_y, reset_distance);
+bool isClearable(const std::string & layer_name) const;
+bool getPosition(double & x, double & y) const;
+std::string getLayerName(const Layer & layer) const;
+-- private data --
+nav2_util::LifecycleNode::SharedPtr node_;
+Costmap2DROS & costmap_;
+unsigned char reset_value_;
+std::vector<std::string> clearable_layers_;
+Service<ClearCostmapExceptRegion> clear_except_service_;
+Service<ClearCostmapAroundRobot>::SharedPtr clear_around_service_;
+Service<ClearEntireCostmap>::SharedPtr clear_entire_service_;
+}
+
+class Costmap2DPublisher{
+-- public method --
+Costmap2DPublisher(ros_node,costmap,global_frame,topic_name,always_send_full_costmap);
+~Costmap2DPublisher();
+void on_configure()
+void on_activate()
+void on_deactivate()
+void on_cleanup() {}
+void updateBounds(x0,xn,y0,yn)
+void publishCostmap();
+bool active()
+-- private method --
+void prepareGrid();
+void prepareCostmap();
+void costmap_service_callback( request_header, request, response);
+-- private data --
+nav2_util::LifecycleNode::SharedPtr node_;
+Costmap2D * costmap_;
+std::string global_frame_;
+std::string topic_name_;
+unsigned int x0_, xn_, y0_, yn_;
+double saved_origin_x_;
+double saved_origin_y_;
+bool active_;
+bool always_send_full_costmap_;
+LifecyclePublisher<OccupancyGrid>::SharedPtr costmap_pub_;
+LifecyclePublisher<OccupancyGridUpdate> costmap_update_pub_;
+LifecyclePublisher<Costmap>::SharedPtr costmap_raw_pub_;
+Service<GetCostmap>::SharedPtr costmap_service_;
+float grid_resolution;
+unsigned int grid_width, grid_height;
+std::unique_ptr<nav_msgs::msg::OccupancyGrid> grid_;
+std::unique_ptr<nav2_msgs::msg::Costmap> costmap_raw_;
+static char * cost_translation_table_;
+}
+
+ClearCostmapService *-- Costmap2DROS
+Costmap2DPublisher *-- Costmap2D
+Costmap2DPublisher *-- Costmap
+}
+std.runtime_error <-- nav2_costmap_2d.CollisionCheckerException
+@enduml
