@@ -69,22 +69,230 @@ rclcpp::Subscription<geometry_msgs::msg::PolygonStamped>::SharedPtr footprint_su
 
 }
 
+class FootprintCollisionChecker<?CostmapT>{
+-- public method --
+FootprintCollisionChecker();
+explicit FootprintCollisionChecker(CostmapT costmap);
+double footprintCost(const Footprint footprint);
+double footprintCostAtPose(double x, double y, double theta, const Footprint footprint);
+double lineCost(int x0, int x1, int y0, int y1) const;
+bool worldToMap(double wx, double wy, unsigned int & mx, unsigned int & my);
+double pointCost(int x, int y) const;
+void setCostmap(CostmapT costmap);
 
+-- protected data --
+CostmapT costmap_
+
+}
+
+class CostmapTopicCollisionChecker{
+-- public method --
+CostmapTopicCollisionChecker(costmap_sub,footprint_sub, tf, name, global_frame, robot_base_frame,transform_tolerance);
+~CostmapTopicCollisionChecker()
+double scorePose(const geometry_msgs::msg::Pose2D & pose);
+bool isCollisionFree(const geometry_msgs::msg::Pose2D & pose);
+-- protected method --
+void unorientFootprint(const Footprint & oriented_footprint, Footprint & reset_footprint);
+Footprint getFootprint(const geometry_msgs::msg::Pose2D & pose);
+-- protected data --
+std::string name_;
+std::string global_frame_;
+std::string robot_base_frame_;
+tf2_ros::Buffer & tf_;
+CostmapSubscriber & costmap_sub_;
+FootprintSubscriber & footprint_sub_;
+double transform_tolerance_;
+FootprintCollisionChecker<std::shared_ptr<Costmap2D>> collision_checker_;
+}
+CostmapTopicCollisionChecker *-- CostmapSubscriber
+CostmapTopicCollisionChecker *-- FootprintSubscriber
+CostmapTopicCollisionChecker *-- FootprintCollisionChecker
 
 class Costmap{
 
 }
-
-class Costmap2D{
-
+class MapLocation{
+unsigned int x
+unsigned int y
+}
+class MarkCell{
+-- public method --
+MarkCell(unsigned char * costmap, unsigned char value)
+inline void operator()(unsigned int offset)
+-- private data --
+unsigned char * costmap_;
+unsigned char value_;
+}
+class PolygonOutlineCells{
+-- public: method --
+PolygonOutlineCells(
+inline void operator()(unsigned int offset)
+-- private data --
+const Costmap2D & costmap_;
+std::vector<MapLocation> & cells_;
 }
 
+PolygonOutlineCells *-- Costmap2D
+PolygonOutlineCells *-- MapLocation
+
+
+class Costmap2D{
+-- public method --
+Costmap2D();
+virtual ~Costmap2D();
+unsigned char getCost(unsigned int mx, unsigned int my) const;
+unsigned char getCost(unsigned int index) const;
+void setCost(unsigned int mx, unsigned int my, unsigned char cost);
+void mapToWorld(unsigned int mx, unsigned int my, double & wx, double & wy) const;
+bool worldToMap(double wx, double wy, unsigned int & mx, unsigned int & my) const;
+void worldToMapNoBounds(double wx, double wy, int & mx, int & my) const;
+void worldToMapEnforceBounds(double wx, double wy, int & mx, int & my) const;
+inline unsigned int getIndex(unsigned int mx, unsigned int my) const
+inline void indexToCells(unsigned int index, unsigned int & mx, unsigned int & my) const
+unsigned char * getCharMap() const;
+unsigned int getSizeInCellsX() const;
+unsigned int getSizeInCellsY() const;
+double getSizeInMetersX() const;
+double getSizeInMetersY() const;
+double getOriginX() const;
+double getOriginY() const;
+double getResolution() const;
+void setDefaultValue(unsigned char c)
+unsigned char getDefaultValue()
+bool setConvexPolygonCost()
+void polygonOutlineCells()
+void convexFillCells()
+virtual void updateOrigin(double new_origin_x, double new_origin_y);
+bool saveMap(std::string file_name);
+void resizeMap()
+void resetMap(unsigned int x0, unsigned int y0, unsigned int xn, unsigned int yn);
+void resetMapToValue()
+unsigned int cellDistance(double world_dist);
+typedef std::recursive_mutex mutex_t;
+mutex_t * getMutex()
+-- protected method --
+void copyMapRegion()
+virtual void deleteMaps();
+virtual void resetMaps();
+virtual void initMaps(unsigned int size_x, unsigned int size_y);
+inline void raytraceLine(at, x0, y0, x1, y1, max_length)
+
+-- protected data --
+unsigned int size_x_;
+unsigned int size_y_;
+double resolution_;
+double origin_x_;
+double origin_y_;
+unsigned char * costmap_;
+unsigned char default_value_;
+
+-- private method --
+inline void bresenham2D(at,abs_da,abs_db,error_b,offset_a,offset_b,offset,max_length)
+-- private data --
+mutex_t * access_;
+}
+Costmap2D *-- PolygonOutlineCells
+Costmap2D *-- MarkCell
 class Costmap2DROS{
 
 }
 
+class LayeredCostmap{
+-- public method --
+LayeredCostmap(std::string global_frame, bool rolling_window, bool track_unknown);
+~LayeredCostmap();
+void updateMap(double robot_x, double robot_y, double robot_yaw);
+std::string getGlobalFrameID() const
+void resizeMap(size_x, size_y, resolution, origin_x,origin_y, size_locked);
+void getUpdatedBounds(double & minx, double & miny, double & maxx, double & maxy)
+bool isCurrent();
+Costmap2D * getCostmap()
+bool isRolling()
+bool isTrackingUnknown()
+std::vector<std::shared_ptr<Layer>> * getPlugins()
+void addPlugin(std::shared_ptr<Layer> plugin)
+bool isSizeLocked()
+void getBounds(unsigned int * x0, unsigned int * xn, unsigned int * y0, unsigned int * yn)
+bool isInitialized()
+void setFootprint(const std::vector<geometry_msgs::msg::Point> & footprint_spec);
+const std::vector<geometry_msgs::msg::Point> & getFootprint() {return footprint_;}
+double getCircumscribedRadius() {return circumscribed_radius_;}
+double getInscribedRadius() {return inscribed_radius_;}
+bool isOutofBounds(double robot_x, double robot_y);
+-- private data --
+Costmap2D costmap_;
+std::string global_frame_;
+bool rolling_window_;
+bool current_;
+double minx_, miny_, maxx_, maxy_;
+unsigned int bx0_, bxn_, by0_, byn_;
+std::vector<std::shared_ptr<Layer>> plugins_;
+bool initialized_;
+bool size_locked_;
+double circumscribed_radius_, inscribed_radius_;
+std::vector<geometry_msgs::msg::Point> footprint_;
+}
+LayeredCostmap *-- Costmap2D
+LayeredCostmap o-- Layer
 
+class Layer{
+-- public method --
+Layer();
+virtual ~Layer() {}
+void initialize(parent, name, tf, node, client_node, rclcpp_node);
+virtual void deactivate()
+virtual void activate()
+virtual void reset()
+virtual void updateBounds(robot_x,robot_y,robot_yaw,min_x,min_y,max_x,max_y);
+virtual void updateCosts(master_grid,min_i,min_j,max_i,max_j) = 0;
+virtual void matchSize() {}
+virtual void onFootprintChanged() {}
+std::string getName() const
+bool isCurrent() const
+const std::vector<geometry_msgs::msg::Point> & getFootprint() const;
+void declareParameter(const std::string & param_name, const rclcpp::ParameterValue & value);
+bool hasParameter(const std::string & param_name);
+void undeclareAllParameters();
+std::string getFullName(const std::string & param_name);
+-- protected method --
+virtual void onInitialize() {}
 
+-- protected data --
+LayeredCostmap * layered_costmap_;
+std::string name_;
+tf2_ros::Buffer * tf_;
+nav2_util::LifecycleNode::SharedPtr node_;
+rclcpp::Node::SharedPtr client_node_;
+rclcpp::Node::SharedPtr rclcpp_node_;
+bool current_;
+bool enabled_;
+std::unordered_set<std::string> local_params_;
+-- private data --
+std::vector<geometry_msgs::msg::Point> footprint_spec_;
+}
+Layer *-- LayeredCostmap
+
+Class CostmapSubscriber{
+-- public method --
+CostmapSubscriber(node, topic_name);
+CostmapSubscriber(node, topic_name);
+CostmapSubscriber(node_base, node_topics, node_logging, topic_name);
+~CostmapSubscriber()
+std::shared_ptr<Costmap2D> getCostmap();
+-- protected method --
+void toCostmap2D();
+void costmapCallback(const nav2_msgs::msg::Costmap::SharedPtr msg);
+-- protected data --
+rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_;
+rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics_;
+rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_;
+std::shared_ptr<Costmap2D> costmap_;
+nav2_msgs::msg::Costmap::SharedPtr costmap_msg_;
+std::string topic_name_;
+bool costmap_received_{false};
+rclcpp::Subscription<nav2_msgs::msg::Costmap>::SharedPtr costmap_sub_;
+}
+CostmapSubscriber *-- Costmap
 
 class ClearCostmapService{
 -- public method --
