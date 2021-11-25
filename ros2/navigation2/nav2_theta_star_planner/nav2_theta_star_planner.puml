@@ -1,0 +1,108 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+'在使用AStar扩展的时候，保留parent node与current node之间的关系，如果parent nide‘parent is'
+'direct conncet 且直连代价低于经过parent node的代价，那么将直接略过parent node，'
+'讲grandpa node与current node建立链接关系. 在搜索到goal node时候，进行traceback处理得到路径。'
+
+
+class coordsM{
+int x;
+int y;
+}
+
+class coordsW{
+double x;
+double y;
+}
+
+class tree_node
+{
+  int x, y;
+  double g = INF_COST;
+  double h = INF_COST;
+  const tree_node * parent_id = nullptr;
+  bool is_in_queue = false;
+  double f = INF_COST;
+}
+
+class comp{
+bool operator()(p1, p2)
+}
+
+namespace nav2_theta_star_planner{
+
+class ThetaStarPlanner{
+-- public method --
+void configure(parent, name,  tf, costmap_ros) override;
+void cleanup() override;
+void activate() override;
+void deactivate() override;
+nav_msgs::msg::Path createPlan(start, goal) override;
+-- protected method --
+void getPlan(nav_msgs::msg::Path & global_path);
+static nav_msgs::msg::Path linearInterpolation(raw_path, dist_bw_points);
+
+-- protected data --
+std::shared_ptr<tf2_ros::Buffer> tf_;
+rclcpp::Clock::SharedPtr clock_;
+rclcpp::Logger logger_;
+std::string global_frame_, name_;
+bool use_final_approach_orientation_;
+std::unique_ptr<theta_star::ThetaStar> planner_;
+
+}
+
+class ThetaStar{
+-- public method --
+ThetaStar();
+~ThetaStar() = default;
+bool generatePath(std::vector<coordsW> & raw_path);
+inline bool isSafe(const int & cx, const int & cy) const
+void setStartAndGoal(start, goal);
+bool isUnsafeToPlan() const
+
+-- public data --
+coordsM src_{}, dst_{};
+nav2_costmap_2d::Costmap2D * costmap_{};
+double w_traversal_cost_;
+double w_euc_cost_;
+double w_heuristic_cost_;
+int how_many_corners_;
+int size_x_, size_y_;
+int nodes_opened = 0;
+
+-- protected method --
+void resetParent(tree_node * curr_data);
+void setNeighbors(const tree_node * curr_data);
+bool losCheck(x0, y0, x1, y1, sl_cost) const;
+void backtrace(std::vector<coordsW> & raw_points, const tree_node * curr_n) const;
+bool isSafe(const int & cx, const int & cy, double & cost) const
+inline double getCost(const int & cx, const int & cy) const
+inline double getTraversalCost(const int & cx, const int & cy)
+inline double getEuclideanCost(const int & ax, const int & ay, const int & bx, const int & by)
+inline double getHCost(const int & cx, const int & cy)
+inline bool withinLimits(const int & cx, const int & cy) const
+inline bool isGoal(const tree_node & this_node) const
+void initializePosn(int size_inc = 0);
+inline void addIndex(const int & cx, const int & cy, tree_node * node_this)
+inline tree_node * getIndex(const int & cx, const int & cy)
+void addToNodesData(const int & id_this)
+void resetContainers();
+void clearQueue()
+
+-- protected data --
+std::vector<tree_node *> node_position_;
+std::vector<tree_node> nodes_data_;
+std::priority_queue<tree_node *, std::vector<tree_node *>, comp> queue_;
+int index_generated_;
+const coordsM moves[8]
+tree_node * exp_node;
+}
+
+ThetaStarPlanner *-- ThetaStar
+}
+nav2_theta_star_planner::ThetaStar *-- coordsM
+nav2_theta_star_planner::ThetaStar *-- coordsW
+nav2_core::GlobalPlanner <-- nav2_theta_star_planner::ThetaStarPlanner
+@enduml

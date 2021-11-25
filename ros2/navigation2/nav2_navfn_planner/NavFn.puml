@@ -1,0 +1,88 @@
+@startuml
+'https://plantuml.com/class-diagram
+namespace nav2_navfn_planner{
+class NavFn
+{
+-- public method --
+NavFn(int nx, int ny);
+~NavFn();
+void setNavArr(int nx, int ny);
+void setCostmap(const COSTTYPE * cmap, bool isROS = true, bool allow_unknown = true);
+bool calcNavFnAstar();
+bool calcNavFnDijkstra(bool atStart = false);
+float * getPathX();
+float * getPathY();
+int getPathLen();
+float getLastPathCost();
+void setGoal(int * goal);
+void setStart(int * start);
+void initCost(int k, float v);
+void updateCell(int n);
+void updateCellAstar(int n);
+void setupNavFn(bool keepit = false);
+bool propNavFnDijkstra(int cycles, bool atStart = false);
+bool propNavFnAstar(int cycles);
+
+-- public data --
+int nx, ny, ns;
+int goal[2];
+COSTTYPE * costarr;
+float * potarr;
+bool * pending;
+int nobs;
+int * pb1, * pb2, * pb3;
+int * curP, * nextP, * overP;
+int curPe, nextPe, overPe;
+float curT;
+float priInc;
+int start[2];
+float * gradx, * grady;
+float * pathx, * pathy;
+int npath;
+int npathbuf;
+float last_path_cost_;
+int calcPath(int n, int * st = NULL);
+float gradCell(int n);
+float pathStep;
+}
+
+class NavfnPlanner
+{
+-- public method --
+NavfnPlanner();
+~NavfnPlanner();
+void configure(parent, name, tf, costmap_ros) override;
+void cleanup() override;
+void activate() override;
+void deactivate() override;
+Path createPlan(start, goal) override;
+-- protected method --
+bool makePlan(start, goal, tolerance, plan);
+bool computePotential(const geometry_msgs::msg::Point & world_point);
+bool getPlanFromPotential(goal, plan);
+void smoothApproachToGoal( goal,plan);
+double getPointPotential(const geometry_msgs::msg::Point & world_point);
+inline double squared_distance(p1, p2)
+bool worldToMap(double wx, double wy, unsigned int & mx, unsigned int & my);
+void mapToWorld(double mx, double my, double & wx, double & wy);
+void clearRobotCell(unsigned int mx, unsigned int my);
+bool isPlannerOutOfDate();
+-- protected data --
+std::unique_ptr<NavFn> planner_;
+std::shared_ptr<tf2_ros::Buffer> tf_;
+rclcpp::Clock::SharedPtr clock_;
+rclcpp::Logger logger_{rclcpp::get_logger("NavfnPlanner")};
+nav2_costmap_2d::Costmap2D * costmap_;
+std::string global_frame_, name_;
+bool allow_unknown_, use_final_approach_orientation_;
+double tolerance_;
+bool use_astar_;
+rclcpp_lifecycle::LifecycleNode::WeakPtr node_;
+rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler_;
+rcl_interfaces::msg::SetParametersResult
+dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters);
+}
+NavfnPlanner *-- NavFn
+}
+nav2_core::GlobalPlanner <-- nav2_navfn_planner::NavfnPlanner
+@enduml

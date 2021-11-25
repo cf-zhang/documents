@@ -16,6 +16,7 @@ https://blog.csdn.net/weixin_38924500/article/details/106156630
 
 使用neuronbot2仿真的时候会上报serial缺失，此时需要在github上找个ros2版本的[serial](https://github.com/RoverRobotics-forks/serial-ros2)包进行使用
 
+desktop文件放在/usr/share/applications
 
 lifecycle节点触发机制有些拗口，使用起来有命令行可以查询设置等操作
 ros2 lifecycle get/list/set/info...
@@ -66,6 +67,56 @@ ros2 run move_base2  lifecycle_client
 ```
 
 colcon build --cmake-args -DBUILD_TESTING=OFF
+
+```
+export ROS_DOMAIN_ID=17
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+
+vim /etc/mi/mi_config 
+vim /etc/systemd/system/cyberdog_ros2.service ^C
+vim /etc/systemd/system/bluetooth_ros2.service 
+vim /etc/systemd/system/cyberdog_automation.service 
+vim ~/.bashrc
+```
+
+```
+ros2 run tf2_ros tf2_echo map odom
+ros2 run tf2_ros tf2_echo odom base_footprint
+systemctl stop cyberdog_ros2.service 
+systemctl stop cyberdog_automation.service 
+ros2 run tf2_ros tf2_echo odom base_footprint
+systemctl stop cyberdog_ros2.service 
+ros2 run tf2_ros tf2_echo odom base_footprint
+systemctl start cyberdog_ros2.service 
+ros2 run tf2_ros tf2_echo odom base_footprint
+systemctl start cyberdog_automation.service 
+ros2 run tf2_ros tf2_echo map odom
+```
+
+ arguments=['--ros-args', '--log-level', 'DEBUG']
+[在launch文件中设置日志级别](https://answers.ros.org/question/363625/ros2-foxy-setting-log-level-in-launch-file/)
+
+
+colcon build --merge-install --install-base /opt/ros2/cyberdog/ --packages-select nav2_map_server
+
+sed -i "s/cyberdog_global_planner/mcr_global_planner/g" `grep cyberdog_global_planner -rl .`
+
+vim全局替换命令
+语法为 :[addr]s/源字符串/目的字符串/[option]
+全局替换命令为：:%s/源字符串/目的字符串/g
+
+`:[range]s/pattern/string/[c,e,g,i]`
+
+|parameter|comment|
+|---|---|
+|range|	指的是範圍，1,7 指從第一行至第七行，1,$ 指從第一行至最後一行，也就是整篇文章，也可以 % 代表。還記得嗎？ % 是目前編輯的文章，# 是前一次編輯的文章。|
+|pattern|	就是要被替換掉的字串，可以用 regexp 來表示。|
+|string|	將 pattern 由 string 所取代。|
+|c|	confirm，每次替換前會詢問。|
+|e|	不顯示 error。|
+|g|	globe，不詢問，整行替換。|
+|i|	ignore 不分大小寫。|
 
 
 

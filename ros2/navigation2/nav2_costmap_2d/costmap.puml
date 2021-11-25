@@ -194,8 +194,88 @@ mutex_t * access_;
 Costmap2D *-- PolygonOutlineCells
 Costmap2D *-- MarkCell
 class Costmap2DROS{
-
+-- public method --
+explicit Costmap2DROS(const std::string & name);
+explicit Costmap2DROS(name,parent_namespace, local_namespace);
+~Costmap2DROS();
+nav2_util::CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+nav2_util::CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
+void start();
+void stop();
+void pause();
+void resume();
+void updateMap();
+void resetLayers();
+bool isCurrent()
+bool getRobotPose(geometry_msgs::msg::PoseStamped & global_pose);
+std::string getName() const
+double getTransformTolerance() const
+Costmap2D * getCostmap()
+std::string getGlobalFrameID()
+std::string getBaseFrameID()
+LayeredCostmap * getLayeredCostmap()
+geometry_msgs::msg::Polygon getRobotFootprintPolygon()
+std::vector<geometry_msgs::msg::Point> getRobotFootprint()
+std::vector<geometry_msgs::msg::Point> getUnpaddedRobotFootprint()
+void getOrientedFootprint(std::vector<geometry_msgs::msg::Point> & oriented_footprint);
+void setRobotFootprint(const std::vector<geometry_msgs::msg::Point> & points);
+void setRobotFootprintPolygon(const geometry_msgs::msg::Polygon::SharedPtr footprint);
+std::shared_ptr<tf2_ros::Buffer> getTfBuffer() {return tf_buffer_;}
+bool getUseRadius() {return use_radius_;}
+-- protected method --
+void getParameters();
+-- protected data --
+rclcpp::Node::SharedPtr client_node_;
+LifecyclePublisher<PolygonStamped>   footprint_pub_;
+Costmap2DPublisher * costmap_publisher_{nullptr};
+Subscription<Polygon>::SharedPtr footprint_sub_;
+Subscription<ParameterEvent>::SharedPtr parameter_sub_;
+std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+LayeredCostmap * layered_costmap_{nullptr};
+std::string name_;
+std::string parent_namespace_;
+void mapUpdateLoop(double frequency);
+bool map_update_thread_shutdown_{false};
+bool stop_updates_{false};
+bool initialized_{false};
+bool stopped_{true};
+std::thread * map_update_thread_
+rclcpp::Time last_publish_{0, 0, RCL_ROS_TIME};
+rclcpp::Duration publish_cycle_{1, 0};
+pluginlib::ClassLoader<Layer> plugin_loader_
+bool always_send_full_costmap_{false};
+std::string footprint_;
+float footprint_padding_{0};
+std::string global_frame_;
+int map_height_meters_{0};
+double map_publish_frequency_{0};
+double map_update_frequency_{0};
+int map_width_meters_{0};
+double origin_x_{0};
+double origin_y_{0};
+std::vector<std::string> default_plugins_;
+std::vector<std::string> default_types_;
+std::vector<std::string> plugin_names_;
+std::vector<std::string> plugin_types_;
+double resolution_{0};
+std::string robot_base_frame_;
+double robot_radius_;
+bool rolling_window_{false};
+bool track_unknown_space_{false};
+double transform_tolerance_{0};
+bool use_radius_{false};
+std::vector<geometry_msgs::msg::Point> unpadded_footprint_;
+std::vector<geometry_msgs::msg::Point> padded_footprint_;
+std::unique_ptr<ClearCostmapService> clear_costmap_service_;
 }
+LifecycleNode <-- Costmap2DROS
+Costmap2DROS *-- Costmap2DPublisher
+Costmap2DROS *-- LayeredCostmap
+Costmap2DROS *-- ClearCostmapService
 
 class LayeredCostmap{
 -- public method --
@@ -271,6 +351,117 @@ std::unordered_set<std::string> local_params_;
 std::vector<geometry_msgs::msg::Point> footprint_spec_;
 }
 Layer *-- LayeredCostmap
+
+class CostmapLayer{
+-- public method --
+CostmapLayer()
+bool isDiscretized()
+virtual void matchSize();
+virtual void clearArea(int start_x, int start_y, int end_x, int end_y);
+void addExtraBounds(double mx0, double my0, double mx1, double my1);
+-- protected method --
+void updateWithTrueOverwrite();
+void updateWithOverwrite();
+void updateWithMax();
+void updateWithAddition();
+void touch();
+void useExtraBounds(double * min_x, double * min_y, double * max_x, double * max_y);
+-- protected data --
+bool has_extra_bounds_;
+-- private data --
+double extra_min_x_, extra_max_x_, extra_min_y_, extra_max_y_;
+}
+
+Layer <-- CostmapLayer
+Costmap2D <-- CostmapLayer
+
+class StaticLayer{
+-- public method --
+StaticLayer();
+virtual ~StaticLayer();
+virtual void onInitialize();
+virtual void activate();
+virtual void deactivate();
+virtual void reset();
+virtual void updateBounds();
+virtual void updateCosts();
+virtual void matchSize();
+-- private method --
+void getParameters();
+void processMap(const nav_msgs::msg::OccupancyGrid & new_map);
+void incomingMap(const nav_msgs::msg::OccupancyGrid::SharedPtr new_map);
+void incomingUpdate(map_msgs::msg::OccupancyGridUpdate::ConstSharedPtr update);
+unsigned char interpretValue(unsigned char value);
+-- private data --
+std::string global_frame_;
+std::string map_frame_;
+bool has_updated_data_{false};
+unsigned int x_{0};
+unsigned int y_{0};
+unsigned int width_{0};
+unsigned int height_{0};
+Subscription<:OccupancyGrid> map_sub_;
+Subscription<OccupancyGridUpdate> map_update_sub_;
+std::string map_topic_;
+bool map_subscribe_transient_local_;
+bool subscribe_to_updates_;
+bool track_unknown_space_;
+bool use_maximum_;
+unsigned char lethal_threshold_;
+unsigned char unknown_cost_value_;
+bool trinary_costmap_;
+bool map_received_{false};
+tf2::Duration transform_tolerance_;
+std::atomic<bool> update_in_progress_;
+nav_msgs::msg::OccupancyGrid::SharedPtr map_buffer_;
+}
+CostmapLayer <-- StaticLayer
+enum InputSensorType{
+VARIABLE,
+FIXED,
+ALL
+}
+class RangeSensorLayer{
+-- public method --
+virtual void onInitialize();
+virtual void updateBounds();
+virtual void updateCosts();
+virtual void reset();
+virtual void deactivate();
+virtual void activate();
+void bufferIncomingRangeMsg()
+-- private method --
+void updateCostmap();
+void processRangeMsg(Range & range_message);
+void processFixedRangeMsg(Range & range_message);
+void processVariableRangeMsg(Range & range_message);
+void resetRange();
+inline double gamma(double theta);
+inline double delta(double phi);
+inline double sensor_model(double r, double phi, double theta);
+inline void get_deltas(double angle, double * dx, double * dy);
+inline void update_cell(ox, oy, ot, r, nx, ny, clear);
+inline double to_prob(unsigned char c)
+inline unsigned char to_cost(double p)
+float area(int x1, int y1, int x2, int y2, int x3, int y3)
+int orient2d(int Ax, int Ay, int Bx, int By, int Cx, int Cy)
+-- private data --
+std::function<void(Range & range_message)> processRangeMessageFunc_;
+std::mutex range_message_mutex_;
+std::list<Range> range_msgs_buffer_;
+double max_angle_, phi_v_;
+double inflate_cone_;
+std::string global_frame_;
+double clear_threshold_, mark_threshold_;
+bool clear_on_max_reading_;
+tf2::Duration transform_tolerance_;
+double no_readings_timeout_;
+rclcpp::Time last_reading_time_;
+unsigned int buffered_readings_;
+std::vector<Subscription<Range>::SharedPtr> range_subs_;
+double min_x_, min_y_, max_x_, max_y_;
+}
+CostmapLayer <-- RangeSensorLayer
 
 Class CostmapSubscriber{
 -- public method --

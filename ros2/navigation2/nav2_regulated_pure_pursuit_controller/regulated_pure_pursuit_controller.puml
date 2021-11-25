@@ -1,0 +1,81 @@
+@startuml
+
+namespace nav2_regulated_pure_pursuit_controller{
+class RegulatedPurePursuitController
+{
+-- public method --
+RegulatedPurePursuitController() = default;
+~RegulatedPurePursuitController() override = default;
+void configure(parent,name, tf,costmap_ros) override;
+void cleanup() override;
+void activate() override;
+void deactivate() override;
+TwistStamped computeVelocityCommands(pose,velocity,goal_checker) override;
+void setPlan(const nav_msgs::msg::Path & path) override;
+void setSpeedLimit(const double & speed_limit, const bool & percentage) override;
+-- protected method --
+Path transformGlobalPlan(PoseStamped & pose);
+bool transformPose(frame, in_pose, out_pose) const;
+double getLookAheadDistance(const geometry_msgs::msg::Twist &);
+unique_ptr<PointStamped> createCarrotMsg(carrot_pose);
+bool shouldRotateToPath(carrot_pose, double & angle_to_path);
+bool shouldRotateToGoalHeading(const geometry_msgs::msg::PoseStamped & carrot_pose);
+void rotateToHeading(linear_vel, angular_vel, angle_to_path, curr_speed);
+bool isCollisionImminent();
+bool inCollision();
+double costAtPose(const double & x, const double & y);
+void applyConstraints()
+geometry_msgs::msg::PoseStamped getLookAheadPoint(const double &, const nav_msgs::msg::Path &);
+double findDirectionChange(const geometry_msgs::msg::PoseStamped & pose);
+rcl_interfaces::msg::SetParametersResult
+dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters);
+-- protected data --
+rclcpp_lifecycle::LifecycleNode::WeakPtr node_;
+std::shared_ptr<tf2_ros::Buffer> tf_;
+std::string plugin_name_;
+std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros_;
+nav2_costmap_2d::Costmap2D * costmap_;
+rclcpp::Logger logger_ {rclcpp::get_logger("RegulatedPurePursuitController")};
+rclcpp::Clock::SharedPtr clock_;
+double desired_linear_vel_, base_desired_linear_vel_;
+double lookahead_dist_;
+double rotate_to_heading_angular_vel_;
+double max_lookahead_dist_;
+double min_lookahead_dist_;
+double lookahead_time_;
+bool use_velocity_scaled_lookahead_dist_;
+tf2::Duration transform_tolerance_;
+bool use_approach_vel_scaling_;
+double min_approach_linear_velocity_;
+double control_duration_;
+double max_allowed_time_to_collision_;
+bool use_regulated_linear_velocity_scaling_;
+bool use_cost_regulated_linear_velocity_scaling_;
+double cost_scaling_dist_;
+double cost_scaling_gain_;
+double inflation_cost_scaling_factor_;
+double regulated_linear_scaling_min_radius_;
+double regulated_linear_scaling_min_speed_;
+bool use_rotate_to_heading_;
+double max_angular_accel_;
+double rotate_to_heading_min_angle_;
+double goal_dist_tol_;
+bool allow_reversing_;
+nav_msgs::msg::Path global_plan_;
+std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Path>> global_path_pub_;
+std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::PointStamped>>
+carrot_pub_;
+std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Path>> carrot_arc_pub_;
+std::unique_ptr<nav2_costmap_2d::FootprintCollisionChecker<nav2_costmap_2d::Costmap2D *>>
+collision_checker_;
+std::mutex mutex_;
+rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler_;
+}
+Controller <-- RegulatedPurePursuitController
+RegulatedPurePursuitController *-- Costmap2DROS
+RegulatedPurePursuitController *-- Costmap2D
+RegulatedPurePursuitController *-- Tf
+
+}
+
+@enduml
