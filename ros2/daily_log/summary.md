@@ -119,4 +119,16 @@ vim全局替换命令
 |i|	ignore 不分大小寫。|
 
 
+设置分区大小
+https://blog.51cto.com/u_12391996/1954361
 
+
+prefix=['xterm -e gdb -ex run --args'],
+
+
+
+
+Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)
+
+> sudo rm /var/lib/apt/lists/lock && sudo rm /var/lib/dpkg/lock
+> sudo apt-add-repository ppa:oibaf/graphics-drivers && apt-get update && apt-get dist-upgrade

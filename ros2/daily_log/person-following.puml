@@ -1,0 +1,125 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+'author: zhangchuanfa
+'description: person following workflow
+
+autonumber
+
+box Action `msg_package::msgs::ActionInterface`
+participant Client
+participant Server
+end box
+
+box Target `Target Detection Related Modules`
+participant Detector
+participant Predictor
+participant DecisionMaker
+end box
+
+box Motion `Mobile Related Modules`
+participant Planner
+participant Optimizer
+participant Controller
+end box
+participant RecoveryManager
+
+note over Client: 任务发起端
+/note over Server: 对外接口及流程管理
+/note over Detector: 跟随目标检测器的接口模块\n通过平滑过滤等操来管理处置\n跟随任务期间检测到或接收到\n的目标信息
+/note over Predictor: 根据所检测到目标和其历史信息\n进行目标行为预测，后期可以加入\n环境中动态障碍物的行为预测
+/note over DecisionMaker: 根据环境及目标行为决策自身\n跟随行为和效果的切换
+/note over Planner: 提供路径规划能力，\n供给Server或Recovery使用
+/note over Optimizer: 根据环境感知对planner\n给出的路径进行优化调整
+/note over Controller: 规划机器人的运动行为
+/note over RecoveryManager: 统一管理各种模块异常情况的模块
+
+Client -[#red]> Server: sendGoal(with or without target feature)
+note left: 首次下发跟随目标，开启跟随任务
+Server -[#blue]> Client: receivedGoal()
+note left: 反馈任务接受之后的响应情况
+
+Server -[#0ff000]> Detector: setTarget(features)
+rnote over Detector: pauseTargetDetector()\nclearHistoricalTargetInfo()\nsetCurrentTargetFeature()\nstartTargetDetector()
+Server -[#0ff000]> Detector: requestTargetPoint()
+Detector -[#000f0f]> Predictor: requestPrediction()
+Predictor -[#000f0f]> Detector: onPredictedTarget()
+Detector -[#0ff000]> Server: onTargetInfo(target)
+group   根据异常及自恢复结果\n来决策后续工作流程
+    Detector -[#f0f000]> Server: onTargetInfoException(exception)
+    Server -[#00f0f0]> RecoveryManager: requestRecovery(exception)
+    RecoveryManager -[#00f0f0]> Server: onRecovery(result)
+end
+Server -[#000fff]> DecisionMaker: requestDecisionMaker()
+DecisionMaker -[#000fff]> Server: onDecisionMaker()
+
+Server -[#0f0f00]> Planner: requestGlobalPlan()
+Planner -[#0f0f00]> Server: onGlobalPlan()
+group   根据异常及自恢复结果\n来决策后续工作流程
+    Planner -[#f0f000]> Server: onGlobalPlanException(exception)
+    Server -[#00f0f0]> RecoveryManager: requestRecovery(exception)
+    RecoveryManager -[#00f0f0]> Server: onRecovery(result)
+end
+
+Server -[#00f00f]> Optimizer: requestOptimizerPlan()
+Optimizer -[#00f00f]> Server: onOptimizerPlan()
+group   根据异常及自恢复结果\n来决策后续工作流程
+    Optimizer -[#f0f000]> Server: onOptimizerPlanException(exception)
+    Server -[#00f0f0]> RecoveryManager: requestRecovery(exception)
+    RecoveryManager -[#00f0f0]> Server: onRecovery(result)
+end
+Server -[#f0000f]> Controller: requestController()
+Controller -[#f0000f]> Server: onController()
+group   根据异常及自恢复结果\n来决策后续工作流程
+    Controller -[#f0f000]> Server: onControllerPlanException(exception)
+    Server -[#00f0f0]> RecoveryManager: requestRecovery(exception)
+    RecoveryManager -[#00f0f0]> Server: onRecovery(result)
+end
+
+Server -[#blue]> Client: feedback(feedback_msg)
+note left: 反馈当前跟随任务的相关状态
+Server -[#0ff000]> Detector: requestTargetPoint()
+...
+
+Client -[#red]> Server: sendGoal(with or without target feature))
+note left: 执行跟随任务过程中，\n有可能发生切换目标事情，\n此时应清理状态并完成目标切换
+
+Server -[#0ff000]> Detector: setTarget(features)
+rnote over Detector: pauseTargetDetector()\nclearHistoricalTargetInfo()\nsetCurrentTargetFeature()\nstartTargetDetector()
+Server -[#0ff000]> Detector: requestTargetPoint()
+Detector -[#000f0f]> Predictor: requestPrediction()
+...
+Server -[#blue]> Client: feedback(feedback_msg))
+Client -[#red]> Server: cancel(goal_id)
+note left: 客户端下达停止当前跟随任务的指令
+Server -[#blue]> Client: canceled((result_msg)
+note left: 当前取消指令成功响应的反馈
+Server -[#blue]> Client: abort(result_msg))
+note left: 任务一般不可主动结束，作为闭环留置此处
+Server -[#blue]> Client: succeed(result_msg)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'alt#Gold #LightBlue Successful in request
+'    Detector -[#f0f000]> Server: onTargetInfo(target)
+'else  #Pink Failure in request
+'    Detector -[#f0f000]> Server: onTargetInfoException(exception)
+'    Server -[#00f0f0]> RecoveryManager: requestRecovery(exception)
+'    RecoveryManager -[#00f0f0]> Server: onRecovery(result)
+'    note left: 根据异常及自恢复结果\n来决策后续工作流程
+'end
+'alt#Gold #LightBlue Successful in request
+
+
+@enduml
