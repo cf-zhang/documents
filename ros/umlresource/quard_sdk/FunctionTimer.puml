@@ -1,0 +1,16 @@
+@startuml
+namespace quad_utils{
+class FunctionTimer {
+-- public method --
+FunctionTimer(const char* function_name)
+double reportSilent()
+double reportStatistics()
+double reportStatistics(int n)
+void reportAndRestart()
+-- private data --
+std::chrono::time_point<std::chrono::steady_clock> start_time_;
+std::chrono::time_point<std::chrono::steady_clock> stop_time_;
+char* function_name_;
+}
+}
+@enduml

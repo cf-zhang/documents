@@ -1,0 +1,92 @@
+@startuml
+namespace quad_utils{
+class GraphClass {
+-- public method --
+GraphClass();
+void addVertex(int index, State s);
+State getVertex(int index);
+int getNumVertices();
+virtual void addEdge(int idx1, int idx2);
+virtual void addEdge(int idx1, int idx2, double edge_cost);
+void removeEdge(int idx1, int idx2);
+virtual int getPredecessor(int idx);
+std::vector<int> getSuccessors(int idx);
+void addAction(int idx, Action a);
+Action getAction(int idx);
+void updateGValue(int idx, double val);
+double getGValue(int idx);
+double computeEdgeCost(int idx1, int idx2);
+void printVertex(State s);
+void printVertices();
+void printIncomingEdges(int idx);
+virtual void printEdges();
+virtual void init(State s);
+-- protected data --
+std::unordered_map<int, State> vertices;
+std::unordered_map<int, Action> actions;
+std::unordered_map<int, std::vector<int>> edges;
+std::unordered_map<int, std::vector<int>> successors;
+std::unordered_map<int, double> g_values;
+}
+
+class PlannerClass{
+-- public method --
+PlannerClass(int direction, const PlannerConfig &planner_config);
+State randomState(const PlannerConfig &planner_config);
+std::vector<int> neighborhoodN(State s, int N) const;
+std::vector<int> neighborhoodDist(State q, double dist) const;
+int getNearestNeighbor(State q) const;
+-- public data --
+int direction_ = FORWARD;
+std::shared_ptr<std::lognormal_distribution<double>> vel_distribution_;
+}
+
+PlannerClass --|> GraphClass
+
+class RRT {
+-- public method --
+RRT();
+~RRT();
+int attemptConnect();
+int attemptConnect();
+virtual int extend();
+std::vector<int> pathFromStart(PlannerClass &T, int idx);
+void printPath(PlannerClass &T, std::vector<int> path);
+void getStatistics();
+bool newConfig();
+std::vector<State> getStateSequence();
+std::vector<Action> getActionSequence();
+-- protected data --
+const double prob_goal_thresh = 0.05;
+bool goal_found = false;
+std::chrono::duration<double> elapsed_total_;
+std::chrono::duration<double> elapsed_to_first_;
+int success_ = 0;
+int num_vertices_;
+double path_length_;
+double path_duration_;
+double dist_to_goal_;
+visualization_msgs::MarkerArray tree_viz_msg_;
+}
+
+class GBPL
+{
+-- public method --
+GBPL();
+int connect()
+std::vector<Action> getActionSequenceReverse()
+void postProcessPath()
+void extractPath()
+void extractClosestPath()
+int findPlan()
+-- protected data --
+double anytime_horizon;
+const double planning_rate_estimate =
+double anytime_horizon_init;
+const double horizon_expansion_factor = 1.2;
+}
+
+GBPL -|> RRT
+
+}
+@enduml

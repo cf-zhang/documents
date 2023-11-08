@@ -1,0 +1,41 @@
+@startuml
+namespace quad_utils{
+class RosUtils {
+-- public method --
+inline double getROSMessageAgeInMs()
+inline double getROSMessageAgeInMs()
+inline double getDurationSinceTime(ros::Time plan_start)
+inline void getPlanIndex()
+inline bool loadROSParam()
+inline bool loadROSParamDefault()
+void updateStateHeaders();
+void interpHeader();
+void interpOdometry();
+void interpJointState();
+void interpMultiFootState();
+void interpGRFArray();
+void interpRobotState();
+void interpRobotPlan();
+quad_msgs::MultiFootState interpMultiFootPlanContinuous()
+void ikRobotState()
+void ikRobotState()
+void fkRobotState();
+void fkRobotState();
+quad_msgs::BodyState eigenToBodyStateMsg();
+Eigen::VectorXd bodyStateMsgToEigen();
+void eigenToGRFArrayMsg();
+Eigen::VectorXd grfArrayMsgToEigen();
+void footStateMsgToEigen();
+void multiFootStateMsgToEigen()
+void multiFootStateMsgToEigen()
+void multiFootStateMsgToEigen()
+void eigenToFootStateMsg();
+void eigenToFootStateMsg();
+void eigenToVector();
+void vectorToEigen();
+void Eigen3ToVector3Msg();
+void vector3MsgToEigen();
+void Eigen3ToPointMsg();
+void pointMsgToEigen()
+}
+@enduml

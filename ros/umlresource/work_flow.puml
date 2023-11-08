@@ -1,0 +1,40 @@
+@startuml
+title work flow
+
+participant ActionServer       as action_server
+participant MainThread         as main_thread
+participant LocalBodyPlanner   as local_body_planner
+participant MotionTerrainMap    as motion_terrain_map
+participant TrajectoryPlanner  as trajectory_planner
+participant TrajectoryTerrainMap  as trajectory_terrain_map
+participant GlobalPlanner      as global_planner
+participant GlobalCostmap      as global_costmap
+
+== make global plan ==
+action_server    --> main_thread:       onGoal
+main_thread      --> local_body_planner:     setGoalPose
+main_thread      --> global_costmap:    requestGlobalCostmapUpdate
+global_costmap   --> main_thread:       onGlobalCostmapUpdate
+main_thread      --> global_planner:    requestGlobalPlan
+global_planner   --> main_thread:       onNewGlobalPlan
+main_thread      --> action_server:     sendFeedback
+
+== trajectory repetition ==
+main_thread      --> trajectory_terrain_map: requestTrajTerrainMapUpdate
+trajectory_terrain_map --> main_thread:       onTrajTerrainMapUpdate
+main_thread      --> trajectory_planner:    requestTrajectory
+trajectory_planner   --> main_thread:       onNewTrajectory
+main_thread      --> local_body_planner:     setTrajectory
+main_thread      --> action_server:     sendFeedback
+
+== motion plan repetition ==
+main_thread      --> motion_terrain_map:     requestMotionTerrainMapUpdate
+motion_terrain_map    --> main_thread:       onMotionTerrainMapUpdate
+main_thread      --> local_body_planner:     requestBodyPlan
+local_body_planner    --> main_thread:       onNewBodyPlan
+
+== task finished ==
+local_body_planner    --> main_thread:       onNavigationCompleted
+main_thread      --> action_server:     sendResult
+
+@enduml

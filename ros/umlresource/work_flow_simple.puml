@@ -1,0 +1,36 @@
+@startuml
+title work flow
+
+
+box "main thread"
+participant ActionServer       as action_server
+participant MoveBase         as move_base
+end box
+
+box "global loop thread" #LightBlue
+participant GlobalPlanner      as global_planner
+participant GlobalCostmap      as global_costmap
+end box
+
+box "local loop thread" #LightGreen
+participant LocalPlanner      as local_planner
+participant LocaLCostmap      as local_costmap
+end box
+== make global plan ==
+action_server    --> move_base:       OnGoal
+move_base      --> local_planner:     SetGoal
+move_base      --> global_costmap:    RequestGlobalCostmapUpdate
+global_costmap   --> move_base:       OnGlobalCostmapUpdate
+move_base      --> global_planner:    RequestGlobalPlan
+global_planner   --> move_base:       OnNewGlobalPlan
+move_base --> local_planner:          SetPlan()
+move_base      --> action_server:     SendFeedback
+== make local plan ==
+move_base      --> local_costmap: RequestLocalCostmapUpdate
+local_costmap --> move_base:      OnLocalCostmapUpdate
+move_base      --> local_planner:    RequestLocalPlan
+local_planner   --> move_base:       OnNewLocalPlan
+== task finished ==
+local_planner    --> move_base:       onNavigationCompleted
+move_base      --> action_server:     sendResult
+@enduml
