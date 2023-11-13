@@ -1,0 +1,314 @@
+@startuml
+'https://plantuml.com/class-diagram
+class Qos
+Qos <-- DynamicListenerQos
+Qos <-- DynamicBroadcasterQos
+Qos <-- StaticListenerQos
+Qos <-- StaticBroadcasterQos
+
+class AsyncBufferInterface
+{
+-- public method --
+~AsyncBufferInterface();
+waitForTransform(target_frame,source_frame,time,timeout,callback);
+}
+
+class utils
+{
+-- public method --
+builtin_interfaces::msg::Time toMsg(const tf2::TimePoint & t)
+tf2::TimePoint fromMsg(const builtin_interfaces::msg::Time & time_msg)
+builtin_interfaces::msg::Duration toMsg(const tf2::Duration & t)
+tf2::Duration fromMsg(const builtin_interfaces::msg::Duration & duration_msg)
+double timeToSec(const builtin_interfaces::msg::Time & time_msg)
+tf2::TimePoint fromRclcpp(const rclcpp::Time & time)
+rclcpp::Time toRclcpp(const tf2::TimePoint & time)
+tf2::Duration fromRclcpp(const rclcpp::Duration & duration)
+rclcpp::Duration toRclcpp(const tf2::Duration & duration)
+}
+
+class BufferInterface
+{
+-- public method --
+geometry_msgs::msg::TransformStamped lookupTransform(target_frame,source_frame,time,timeout) const;
+geometry_msgs::msg::TransformStamped lookupTransform(target_frame,target_time,source_frame,source_time,fixed_frame,timeout) const;
+bool canTransform(target_frame,source_frame,time,timeout,errstr) const;
+bool canTransform(target_frame,target_time,source_frame,source_time,fixed_frame,timeout,errstr) const;
+T & transform(in,out,target_frame,timeout) const
+T transform(in,target_frame,timeout) const
+B & transform(in,out,target_frame,timeout) const
+T & transform(in,out,target_frame,target_time,fixed_frame,timeout) const
+T transform(in,target_frame,target_time,fixed_frame,timeout) const
+B & transform(in,out,target_frame,target_time,fixed_frame,timeout) const
+virtual ~BufferInterface()
+}
+
+
+
+class BufferServer
+{
+-- public method--
+BufferServer(buffer,node,ns,check_period)
+-- private method --
+private:
+GoalResponse goalCB(uuid,goal);
+void acceptedCB(gh);
+CancelResponse cancelCB(gh);
+void checkTransforms();
+bool canTransform(gh);
+geometry_msgs::msg::TransformStamped lookupTransform(gh);
+-- private data --
+const tf2::BufferCoreInterface & buffer_;
+rclcpp::Logger logger_;
+rclcpp_action::Server<LookupTransformAction>::SharedPtr server_;
+std::list<GoalInfo> active_goals_;
+std::mutex mutex_;
+rclcpp::TimerBase::SharedPtr check_timer_;
+}
+
+class runtime_error
+runtime_error <-- LookupTransformGoalException
+LookupTransformGoalException <-- GoalRejectedException
+LookupTransformGoalException <-- GoalAbortedException
+LookupTransformGoalException <-- GoalCanceledException
+LookupTransformGoalException <-- UnexpectedResultCodeException
+
+
+class BufferClient
+{
+-- public method --
+BufferClient(node,ns,check_frequency,timeout_padding)
+virtual ~BufferClient() = default;
+geometry_msgs::msg::TransformStamped lookupTransform(target_frame,source_frame,time,timeout);
+geometry_msgs::msg::TransformStamped lookupTransform(target_frame,target_time,source_frame,source_time,fixed_frame,timeout)
+bool canTransform(target_frame,source_frame,time,timeout,errstr)
+bool canTransform(target_frame,target_time,source_frame,source_time,fixed_frame,timeout,errstr);
+bool waitForServer(const tf2::Duration & timeout = tf2::durationFromSec(0))
+-- private method --
+geometry_msgs::msg::TransformStamped processGoal(goal) const;
+geometry_msgs::msg::TransformStamped processResult(result) const;
+-- private data --
+rclcpp_action::Client<LookupTransformAction>::SharedPtr client_;
+double check_frequency_;
+tf2::Duration timeout_padding_;
+}
+
+BufferInterface <-- BufferClient
+
+runtime_error <-- CreateTimerInterfaceException
+runtime_error <-- InvalidTimerHandleException
+
+class CreateTimerInterface
+{
+-- public method --
+~CreateTimerInterface() = default;
+TimerHandle createTimer(clock,period,callback);
+void cancel(timer_handle);
+void reset(timer_handle);
+void remove(timer_handle) = 0;
+}
+
+class CreateTimerROS
+{
+-- public method --
+CreateTimerROS(node_base,node_timers);
+~CreateTimerROS() = default;
+TimerHandle createTimer(clock,period,callback) override;
+void cancel(timer_handle) override;
+void reset(timer_handle) override;
+void remove(timer_handle) override;
+-- private method --
+void cancelNoLock(timer_handle);
+void timerCallback(timer_handle,callback);
+-- private data --
+rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_;
+rclcpp::node_interfaces::NodeTimersInterface::SharedPtr node_timers_;
+TimerHandle next_timer_handle_index_;
+std::unordered_map<TimerHandle, rclcpp::TimerBase::SharedPtr> timers_map_;
+std::mutex timers_map_mutex_;
+}
+
+CreateTimerInterface <-- CreateTimerROS
+
+
+class echoListener
+{
+-- public method --
+explicit echoListener(rclcpp::Clock::SharedPtr clock)
+~echoListener()
+-- public data --
+tf2_ros::Buffer buffer_;
+std::shared_ptr<tf2_ros::TransformListener> tfl_;
+}
+
+
+class TFMonitor
+{
+TFMonitor(node,sing_specific_chain,framea,frameb)
+void callback(const tf2_msgs::msg::TFMessage::SharedPtr msg)
+std::string outputFrameInfo(it,frame_authority)
+void spin()
+-- public data --
+std::string framea_, frameb_;
+bool using_specific_chain_;
+rclcpp::Node::SharedPtr node_;
+rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr subscriber_tf_, subscriber_tf_message_;
+std::vector<std::string> chain_;
+std::map<std::string, std::string> frame_authority_map;
+std::map<std::string, std::vector<double>> delay_map;
+std::map<std::string, std::vector<double>> authority_map;
+std::map<std::string, std::vector<double>> authority_frequency_map;
+rclcpp::Clock::SharedPtr clock_;
+tf2_ros::Buffer buffer_;
+std::shared_ptr<tf2_ros::TransformListener> tf_;
+tf2_msgs::msg::TFMessage message_;
+std::mutex map_mutex_;
+}
+
+class TransformBroadcaster
+{
+-- public method --
+TransformBroadcaster(node,qos,options)
+void sendTransform(const geometry_msgs::msg::TransformStamped & transform);
+void sendTransform(const std::vector<geometry_msgs::msg::TransformStamped> & transforms);
+-- private method --
+rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr publisher_;
+}
+
+class StaticTransformBroadcaster
+{
+-- public method --
+StaticTransformBroadcaster(node,qos,options)
+void sendTransform(const geometry_msgs::msg::TransformStamped & transform);
+void sendTransform(const std::vector<geometry_msgs::msg::TransformStamped> & transforms);
+-- private data --
+rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr publisher_;
+tf2_msgs::msg::TFMessage net_message_;
+}
+
+Node <-- StaticTransformBroadcasterNode
+class StaticTransformBroadcasterNode
+{
+-- public method --
+StaticTransformBroadcasterNode(options);
+~StaticTransformBroadcasterNode();
+-- private data --
+std::unique_ptr<tf2_ros::StaticTransformBroadcaster> broadcaster_;
+}
+
+class Buffer
+{
+-- public method --
+Buffer(clock,cache_time,node)
+geometry_msgs::msg::TransformStamped lookupTransform(target_frame,source_frame,time,timeout)
+geometry_msgs::msg::TransformStamped lookupTransform(target_frame,target_time,source_frame,source_time,fixed_frame,timeout)
+bool canTransform(target_frame,source_frame,target_time,timeout,errstr);
+bool canTransform(target_frame,target_time,source_frame,source_time,fixed_frame,timeout,errstr)
+TransformStampedFuture waitForTransform(target_frame,source_frame,time,timeout,callback);
+void setCreateTimerInterface(create_timer_interface)
+-- private method --
+void timerCallback(timer_handle,promise,future,callback);
+bool getFrames(req,res);
+void onTimeJump(jump);
+bool checkAndErrorDedicatedThreadPresent(std::string * errstr) const;
+rclcpp::Logger getLogger() const;
+-- private data --
+rclcpp::Service<tf2_msgs::srv::FrameGraph>::SharedPtr frames_server_;
+rclcpp::Clock::SharedPtr clock_;
+rclcpp::Node::SharedPtr node_;
+CreateTimerInterface::SharedPtr timer_interface_;
+std::unordered_map<TimerHandle, tf2::TransformableRequestHandle> timer_to_request_map_;
+std::mutex timer_to_request_map_mutex_;
+rclcpp::JumpHandler::SharedPtr jump_handler_;
+}
+
+BufferInterface <-- Buffer
+AsyncBufferInterface <-- Buffer
+tf2::BufferCore <-- Buffer
+
+class TransformListener
+{
+-- public method --
+TransformListener(buffer,spin_thread)
+TransformListener(buffer,node,spin_thread,qos,static_qos,options,static_options)
+virtual ~TransformListener();
+-- private method --
+void init(node,spin_thread,qos,static_qos,options,static_options)
+void initThread(node_base_interface);
+void subscription_callback(msg, is_static);
+-- private data --
+thread_ptr dedicated_listener_thread_;
+rclcpp::Node::SharedPtr optional_default_node_ = nullptr;
+rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr message_subscription_tf_;
+rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr message_subscription_tf_static_;
+tf2::BufferCore & buffer_;
+tf2::TimePoint last_update_;
+rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_interface_;
+}
+
+class MessageFilterBase
+{
+-- public method --
+~MessageFilterBase()
+void clear()
+void setTargetFrame(target_frame);
+void setTargetFrames(target_frames);
+void setTolerance(tolerance);
+}
+
+class MessageFilter
+{
+-- public method --
+MessageFilter(buffer,target_frame,queue_size,node,buffer_timeout)
+MessageFilter(buffer,target_frame,queue_size,node_logging,node_clock,buffer_timeout)
+MessageFilter(f,buffer,target_frame,queue_size,node,buffer_timeout)
+MessageFilter(f,buffer,target_frame,queue_size,node_logging,node_clock,buffer_timeout)
+~MessageFilter()
+void setTargetFrame(const std::string & target_frame)
+void setTargetFrames(const V_string & target_frames)
+std::string getTargetFramesString()
+void setTolerance(const rclcpp::Duration & tolerance)
+void clear()
+void add(const MEvent & evt)
+void add(const MConstPtr & message)
+virtual void setQueueSize(uint32_t new_queue_size)
+virtual uint32_t getQueueSize()
+-- private data --
+void init()
+void transformReadyCallback(future, handle)
+void incomingMessage(const message_filters::MessageEvent<M const> & evt)
+void checkFailures()
+void messageDropped(const MEvent & evt, FilterFailureReason reason)
+void messageReady(const MEvent & evt)
+void signalFailure(const MEvent & evt, FilterFailureReason reason)
+static std::string stripSlash(const std::string & in)
+-- private data --
+const rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_;
+const rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock_;
+BufferT & buffer_;
+V_string target_frames_;
+std::string target_frames_string_;
+std::mutex target_frames_mutex_;
+uint32_t queue_size_;
+uint64_t next_handle_index_ = 0;
+L_MessageInfo messages_;
+std::mutex messages_mutex_;
+uint64_t expected_success_count_;
+bool warned_about_empty_frame_id_;
+uint64_t successful_transform_count_;
+uint64_t failed_out_the_back_count_;
+uint64_t transform_message_count_;
+uint64_t incoming_message_count_;
+uint64_t dropped_message_count_;
+rclcpp::Time last_out_the_back_stamp_;
+std::string last_out_the_back_frame_;
+rclcpp::Time next_failure_warning_;
+rclcpp::Duration time_tolerance_
+message_filters::Connection message_connection_;
+message_filters::Connection message_connection_failure;
+tf2::Duration buffer_timeout_;
+}
+
+MessageFilterBase <-- MessageFilter
+SimpleFilter <-- MessageFilter
+@enduml

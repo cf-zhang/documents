@@ -1,0 +1,434 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class TimePoint
+{
+TimePoint get_now()
+Duration durationFromSec(double t_sec)
+TimePoint timeFromSec(double t_sec)
+double durationToSec(const tf2::Duration & input)
+ double timeToSec(const TimePoint & timepoint)
+std::string displayTimePoint(const TimePoint & stamp);
+}
+
+class QuadWord
+{
+-- public  method --
+const tf2Scalar& getX()
+const tf2Scalar& getY()
+const tf2Scalar& getZ()
+void setX(tf2Scalar x)
+void setY(tf2Scalar y)
+void setZ(tf2Scalar z)
+void setW(tf2Scalar w)
+const tf2Scalar& x()
+const tf2Scalar& y() 
+const tf2Scalar& z()
+const tf2Scalar& w()
+operator tf2Scalar *()
+operator const tf2Scalar *()
+bool operator==(const QuadWord& other) const
+bool operator!=(const QuadWord& other) const
+void setValue(const tf2Scalar& x, const tf2Scalar& y, const tf2Scalar& z)
+void setValue(const tf2Scalar& x, const tf2Scalar& y, const tf2Scalar& z,const tf2Scalar& w)
+QuadWord()
+QuadWord(const tf2Scalar& x, const tf2Scalar& y, const tf2Scalar& z)		
+QuadWord(const tf2Scalar& x, const tf2Scalar& y, const tf2Scalar& z,const tf2Scalar& w) 
+void setMax(const QuadWord& other)
+void setMin(const QuadWord& other)
+-- protected data --
+tf2Scalar	m_floats[4];
+}
+
+
+class Quaternion
+{
+-- public method --
+Quaternion()
+Quaternion(x,y,z,w) 
+Quaternion(axis, angle) 
+void setRotation(axis,angle)
+void setEuler(const tf2Scalar& yaw, const tf2Scalar& pitch, const tf2Scalar& roll)
+void setRPY(const tf2Scalar& roll, const tf2Scalar& pitch, const tf2Scalar& yaw)
+Quaternion& operator+=(const Quaternion& q)
+Quaternion& operator-=(const Quaternion& q) 
+Quaternion& operator*=(const tf2Scalar& s)
+Quaternion& operator*=(const Quaternion& q)
+tf2Scalar dot(const Quaternion& q) const
+tf2Scalar length2() const
+tf2Scalar length() const
+Quaternion& normalize() 
+operator*(const tf2Scalar& s) const
+Quaternion operator/(const tf2Scalar& s) const
+Quaternion& operator/=(const tf2Scalar& s) 
+Quaternion normalized() const 
+tf2Scalar angle(const Quaternion& q) const 
+tf2Scalar angleShortestPath(const Quaternion& q) const 
+tf2Scalar getAngle() const 
+tf2Scalar getAngleShortestPath() const 
+Vector3 getAxis() const
+Quaternion inverse() const
+operator+(const Quaternion& q2) const
+operator-(const Quaternion& q2) const
+Quaternion operator-() const
+Quaternion farthest( const Quaternion& qd) const 
+Quaternion nearest( const Quaternion& qd) const 
+Quaternion slerp(const Quaternion& q, const tf2Scalar& t) const
+const Quaternion&	getIdentity()
+const tf2Scalar& getW() 
+}
+QuadWord <--Quaternion
+
+
+
+
+class Stamped
+{
+-- public data --
+TimePoint stamp_;
+std::string frame_id_;
+Stamped()
+Stamped(input,timestamp,frame_id)
+Stamped(s)
+void setData(input)
+Stamped & operator=(s)
+}
+T <-- Stamped
+
+class WithCovarianceStamped
+{
+-- public data --
+TimePoint stamp_;
+std::string frame_id_;
+std::array<std::array<double, 6>, 6> cov_mat_;
+-- public method --
+WithCovarianceStamped()
+WithCovarianceStamped(input,timestamp,frame_id,covariance_matrix)
+WithCovarianceStamped(const WithCovarianceStamped<T> & w)
+void setData(const T & input)
+WithCovarianceStamped & operator=(const WithCovarianceStamped<T> & w)
+}
+T <-- WithCovarianceStamped
+
+
+
+
+class Utils
+{
+void getEulerYPR(const A & a, double & yaw, double & pitch, double & roll)
+double getYaw(const A & a)
+A getTransformIdentity()
+void doTransform(data_in,data_out,transform);
+tf2::TimePoint getTimestamp(const T & t);
+std::string getFrameId(const T & t);
+std::array<std::array<double, 6>, 6> getCovarianceMatrix(const T & t);
+tf2::TimePoint getTimestamp(const tf2::Stamped<P> & t)
+std::string getFrameId(const tf2::Stamped<P> & t)
+std::array<std::array<double, 6>, 6> getCovarianceMatrix(const tf2::WithCovarianceStamped<P> & t)
+B toMsg(const A & a);
+void fromMsg(const A &, B & b);
+void convert(const A & a, B & b)
+void convert(const A & a1, A & a2)
+std::array<std::array<double, 6>, 6> covarianceRowMajorToNested(const std::array<double, 36> & row_major)
+std::array<double, 36> covarianceNestedToRowMajor(const std::array<std::array<double, 6>, 6> & nested_array)
+tf2::Quaternion toQuaternion(const tf2::Quaternion & q)
+tf2::Quaternion toQuaternion(const geometry_msgs::msg::Quaternion & q)
+tf2::Quaternion toQuaternion(const geometry_msgs::msg::QuaternionStamped & q)
+tf2::Quaternion toQuaternion(const tf2::Stamped<T> & t)
+tf2::Quaternion toQuaternion(const T & t)
+void getEulerYPR(const tf2::Quaternion & q, double & yaw, double & pitch, double & roll)
+double getYaw(const tf2::Quaternion & q)
+}
+
+class TransformStorage
+{
+-- public method --
+TransformStorage();
+TransformStorage(stamp,q,t,frame_id,child_frame_id);
+TransformStorage(rhs)
+TransformStorage & operator=(rhs)
+-- public data --
+tf2::Quaternion rotation_;
+tf2::Vector3 translation_;
+TimePoint stamp_;
+CompactFrameID frame_id_;
+CompactFrameID child_frame_id_;
+}
+
+TransformStorage *-- TimePoint
+TransformStorage *-- Quaternion
+TransformStorage *-- Vector3
+
+class TimeCacheInterface
+{
+-- public method --
+virtual ~TimeCacheInterface();
+virtual bool getData(time,data_out,error_str = 0);
+virtual bool insertData(new_data) = 0;
+virtual void clearList() = 0;
+virtual CompactFrameID getParent(time,error_str) = 0;
+virtual P_TimeAndFrameID getLatestTimeAndParent() = 0;
+virtual unsigned int getListLength() = 0;
+virtual tf2::TimePoint getLatestTimestamp() = 0;
+virtual tf2::TimePoint getOldestTimestamp() = 0;
+}
+
+class TimeCache
+{
+-- public data --
+static const int MIN_INTERPOLATION_DISTANCE = 5;
+static const unsigned int MAX_LENGTH_LINKED_LIST = 1000000;
+-- public method --
+TimeCache(max_storage_time);
+bool getData(time,data_out,error_str);
+bool insertData(new_data);
+void clearList();
+tf2::CompactFrameID getParent(time,error_str);
+P_TimeAndFrameID getLatestTimeAndParent();
+unsigned int getListLength();
+TimePoint getLatestTimestamp();
+virtual TimePoint getOldestTimestamp();
+-- private data --
+typedef std::list<TransformStorage> L_TransformStorage;
+L_TransformStorage storage_;
+tf2::Duration max_storage_time_;
+-- private method --
+uint8_t findClosest(one,two,target_time,error_str);
+void interpolate(one,two,output);
+void pruneList();
+}
+TimeCacheInterfac <-- TimeCache
+
+class StaticCache
+{
+-- public method --
+virtual bool getData(time,data_out,error_str);
+virtual bool insertData(new_data);
+virtual void clearList();
+virtual CompactFrameID getParent(time,error_str);
+virtual P_TimeAndFrameID getLatestTimeAndParent();
+virtual unsigned int getListLength();
+virtual TimePoint getLatestTimestamp();
+virtual TimePoint getOldestTimestamp();
+-- private data --
+TransformStorage storage_;
+}
+
+TimeCacheInterface <-- StaticCache
+
+class TransformException
+{
+-- public method --
+TransformException(const std::string errorDescription)
+}
+runtime_error <-- TransformException
+
+class ConnectivityException
+{
+-- public method --
+ConnectivityException(const std::string errorDescription)
+}
+TransformException <-- ConnectivityException
+
+class LookupException
+{
+-- public method --
+LookupException(const std::string errorDescription)
+}
+TransformException <-- LookupException
+class ExtrapolationException
+{
+-- public method --
+ExtrapolationException(const std::string errorDescription)
+}
+TransformException <-- ExtrapolationException
+
+class InvalidArgumentException
+{
+-- public method --
+InvalidArgumentException(const std::string errorDescription)
+}
+TransformException <-- InvalidArgumentException
+class TimeoutException
+{
+-- public method --
+TimeoutException(const std::string errorDescription)
+}
+TransformException <-- TimeoutException
+
+class Converter
+{
+-- public method --
+static void convert(const A & a, B & b);
+}
+
+class Matrix3x3
+{
+-- private date --
+Vector3 m_el[3]
+-- public method --
+Matrix3x3 () {}
+explicit Matrix3x3(const Quaternion& q)
+Matrix3x3(xx,xy,xz,yx,yy,yz,zx,zy,zz)
+Matrix3x3 (const Matrix3x3& other)
+Matrix3x3& operator=(const Matrix3x3& other)
+Vector3 getColumn(int i) const
+const Vector3& getRow(int i) const
+Vector3&  operator[](int i)
+const Vector3& operator[](int i) const
+Matrix3x3& operator*=(const Matrix3x3& m); 
+void setFromOpenGLSubMatrix(const tf2Scalar *m)
+void setValue(xx,xy,xz,yx,yy,yz, zx,zy,zz)
+void setRotation(const Quaternion& q) 
+void setEulerYPR(eulerZ,eulerY,eulerX)
+void setRPY(roll,pitch,yaw)
+void setIdentity()
+static const Matrix3x3&	getIdentity()
+void getOpenGLSubMatrix(tf2Scalar *m) const 
+void getRotation(Quaternion& q) const
+void getEulerYPR(yaw,pitch,roll,solution_number = 1) const
+void getRPY(roll,pitch,yaw,solution_number = 1) const
+Matrix3x3 scaled(const Vector3& s) const
+tf2Scalar determinant() const;
+Matrix3x3 adjoint() const;
+Matrix3x3 absolute() const;
+Matrix3x3 transpose() const;
+Matrix3x3 inverse() const; 
+Matrix3x3 transposeTimes(const Matrix3x3& m) const;
+Matrix3x3 timesTranspose(const Matrix3x3& m) const;
+tf2Scalar tdotx(const Vector3& v) const 
+tf2Scalar tdoty(const Vector3& v) const 
+tf2Scalar tdotz(const Vector3& v) const 
+void diagonalize(Matrix3x3& rot, tf2Scalar threshold, int maxSteps)
+tf2Scalar cofac(int r1, int c1, int r2, int c2) const 
+void serialize(struct	Matrix3x3Data& dataOut) const;
+void serializeFloat(struct	Matrix3x3FloatData& dataOut) const;
+void deSerialize(const struct	Matrix3x3Data& dataIn);
+void deSerializeFloat(const struct	Matrix3x3FloatData& dataIn);
+void deSerializeDouble(const struct	Matrix3x3DoubleData& dataIn);
+
+}
+
+
+class Transform
+{
+-- private data --
+Matrix3x3 m_basis;
+Vector3   m_origin;
+
+-- public method --
+Transform()
+Transform(Quaternion& q,const Vector3& c) 
+Transform(Matrix3x3& b,vector3& c)
+Transform (const Transform& other)
+Transform& operator=(const Transform& other)
+void mult(const Transform& t1, const Transform& t2) {
+Vector3 operator()(const Vector3& x) const
+Vector3 operator*(const Vector3& x) const
+Quaternion operator*(const Quaternion& q) const
+Matrix3x3& getBasis()
+Vector3& getOrigin()
+Quaternion getRotation() const
+void setFromOpenGLMatrix(const tf2Scalar *m)
+void getOpenGLMatrix(tf2Scalar *m) const 
+void setOrigin(const Vector3& origin) 
+Vector3 invXform(const Vector3& inVec) const;
+void setBasis(const Matrix3x3& basis)
+void setRotation(const Quaternion& q)
+void setIdentity()
+Transform& operator*=(const Transform& t) 
+Transform inverse() const
+Transform inverseTimes(const Transform& t) const;  
+static const Transform&	getIdentity()
+void serialize(struct	TransformData& dataOut) const;
+void serializeFloat(struct	TransformFloatData& dataOut) const;
+void deSerialize(const struct	TransformData& dataIn);
+void deSerializeDouble(const struct	TransformDoubleData& dataIn);
+void deSerializeFloat(const struct	TransformFloatData& dataIn);
+}
+Transform *-- Matrix3x3
+Transform *-- Vector3
+
+class BufferCoreInterface
+{
+-- public method --
+~BufferCoreInterface() = default;
+virtual void clear() = 0;
+geometry_msgs::msg::TransformStamped lookupTransform(target_frame,source_frame,time) const;
+geometry_msgs::msg::TransformStamped lookupTransform(target_frame,target_time,source_frame,source_time,fixed_frame);
+bool canTransform(target_frame,source_frame,time,error_msg);
+bool canTransform(target_frame,target_time,source_frame,source_time,fixed_frame,error_msg) const;
+virtual std::vector<std::string> getAllFrameNames() const;
+}
+
+class BufferCore
+{
+-- public method --
+explicit BufferCore(cache_time_);
+virtual ~BufferCore(void);
+void clear() override;
+bool setTransform(transform,authority,is_static);
+geometry_msgs::msg::TransformStamped lookupTransform(target_frame,source_frame,time) const override;
+geometry_msgs::msg::TransformStamped lookupTransform(target_frame,target_time,source_frame,source_time,fixed_frame) const override;
+bool canTransform(target_frame,source_frame,time,error_msg = NULL) const override;
+bool canTransform(target_frame,target_time,source_frame,source_time,fixed_frame,error_msg) const override;
+std::vector<std::string> getAllFrameNames() const override;
+std::string allFramesAsYAML(TimePoint current_time) const;
+std::string allFramesAsYAML() const;
+std::string allFramesAsString() const;
+TransformableRequestHandle addTransformableRequest(cb,target_frame,source_frame,time);
+void cancelTransformableRequest(TransformableRequestHandle handle);
+void setUsingDedicatedThread(bool value)
+bool isUsingDedicatedThread() const
+bool _frameExists(const std::string & frame_id_str) const;
+bool _getParent(const std::string & frame_id, TimePoint time, std::string & parent) const;
+void _getFrameStrings(std::vector<std::string> & ids) const;
+CompactFrameID _lookupFrameNumber(const std::string & frameid_str) const
+CompactFrameID _lookupOrInsertFrameNumber(const std::string & frameid_str)
+tf2::TF2Error _getLatestCommonTime(target_frame,source_frame,time,error_string) const
+CompactFrameID _validateFrameId(function_name_arg,frame_id) const
+tf2::Duration getCacheLength()
+std::string _allFramesAsDot(TimePoint current_time) const;
+std::string _allFramesAsDot() const;
+void _chainAsVector(target_frame,target_time,source_frame,source_time,fixed_frame,output) const;
+-- private method --
+std::string allFramesAsStringNoLock() const;
+
+-- private data --
+V_TimeCacheInterface frames_;
+mutable std::mutex frame_mutex_;
+typedef std::unordered_map<std::string, CompactFrameID> M_StringToCompactFrameID;
+M_StringToCompactFrameID frameIDs_;
+std::vector<std::string> frameIDs_reverse_;
+std::map<CompactFrameID, std::string> frame_authority_;
+tf2::Duration cache_time_;
+M_TransformableCallback transformable_callbacks_;
+uint32_t transformable_callbacks_counter_;
+std::mutex transformable_callbacks_mutex_;
+V_TransformableRequest transformable_requests_;
+std::mutex transformable_requests_mutex_;
+uint64_t transformable_requests_counter_;
+-- private method --
+bool setTransformImpl(transform_in,frame_id,child_frame_id,stamp,authority,is_static);
+void lookupTransformImpl(target_frame,source_frame,time_in,transform,time_out) const;
+void lookupTransformImpl(target_frame,target_time,source_frame,source_time,fixed_frame,transform,time_out) const;
+TimeCacheInterfacePtr getFrame(CompactFrameID c_frame_id) const;
+TimeCacheInterfacePtr allocateFrame(CompactFrameID cfid, bool is_static);
+CompactFrameID validateFrameId(function_name_arg,frame_id,error_msg) const;
+CompactFrameID validateFrameId(function_name_arg,frame_id) const;
+CompactFrameID lookupFrameNumber(const std::string & frameid_str) const;
+CompactFrameID lookupOrInsertFrameNumber(const std::string & frameid_str);
+const std::string & lookupFrameString(CompactFrameID frame_id_num) const;
+void createConnectivityErrorString(source_frame,target_frame,out) const;
+tf2::TF2Error getLatestCommonTime(target_frame,source_frame,time,error_string) const;
+tf2::TF2Error walkToTopParent(f,time,target_id,source_id,error_string) const;
+tf2::TF2Error walkToTopParent(f,time,target_id,source_id,error_string,frame_chain) const;
+void testTransformableRequests();
+bool canTransformInternal(target_id,source_id,time,error_msg) const;
+bool canTransformNoLock(target_id,source_id,time,error_msg) const;
+-- private data --
+bool using_dedicated_thread_;
+}
+
+BufferCoreInterface <-- BufferCore
+@enduml
