@@ -43,3 +43,4 @@ set timeout 30
 send "$passwd\r"
 send "exit\r"
 expect eof
+# test

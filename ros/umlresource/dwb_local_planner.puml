@@ -1,0 +1,65 @@
+@startuml
+Title "dwb local planner class map"
+
+class nav2_core::Controller
+
+class DWBLocalPlanner
+{
+-- public method --
+DWBLocalPlanner();
+void configure()
+virtual ~DWBLocalPlanner()
+void activate() override;
+void deactivate() override;
+void cleanup() override;
+void setPlan(const nav_msgs::msg::Path & path) override;
+geometry_msgs::msg::TwistStamped computeVelocityCommands()
+virtual dwb_msgs::msg::TrajectoryScore scoreTrajectory()
+virtual nav_2d_msgs::msg::Twist2DStamped computeVelocityCommands()
+void setSpeedLimit() override
+-- protected method --
+void prepareGlobalPlan()
+virtual dwb_msgs::msg::TrajectoryScore coreScoringAlgorithm()
+virtual nav_2d_msgs::msg::Path2D transformGlobalPlan()
+std::string resolveCriticClassName();
+virtual void loadCritics();
+-- protected data --
+nav_2d_msgs::msg::Path2D global_plan_;
+bool prune_plan_;
+double prune_distance_;
+bool debug_trajectory_details_;
+rclcpp::Duration transform_tolerance_{0, 0};
+bool shorten_transformed_plan_;
+rclcpp_lifecycle::LifecycleNode::WeakPtr node_;
+rclcpp::Clock::SharedPtr clock_;
+rclcpp::Logger logger_{rclcpp::get_logger("DWBLocalPlanner")};
+std::shared_ptr<tf2_ros::Buffer> tf_;
+std::shared_ptr<nav2_costmap_2d::Costmap2DROS1> costmap_ros_;
+std::unique_ptr<DWBPublisher> pub_;
+std::vector<std::string> default_critic_namespaces_;
+pluginlib::ClassLoader<TrajectoryGenerator> traj_gen_loader_;
+TrajectoryGenerator::Ptr traj_generator_;
+pluginlib::ClassLoader<TrajectoryCritic> critic_loader_;
+std::vector<TrajectoryCritic::Ptr> critics_;
+std::string dwb_plugin_name_;
+bool short_circuit_trajectory_evaluation_;
+}
+
+nav2_core::Controller <|-- DWBLocalPlanner
+
+' OscillationCritic +-- CommandTrend
+' MapGridCritic +-- MapGridQueue
+' CostmapQueue <|-- MapGridQueue
+' TrajectoryCritic <|-- BaseObstacleCritic
+' TrajectoryCritic <|-- MapGridCritic
+' MapGridCritic <|--  GoalDistCritic
+' GoalDistCritic <|-- GoalAlignCritic
+' BaseObstacleCritic <|-- ObstacleFootprintCritic
+' TrajectoryCritic <|-- OscillationCritic
+' PathDistCritic <|-- PathAlignCritic
+' MapGridCritic <|-- PathDistCritic
+' TrajectoryCritic <|-- PreferForwardCritic
+' TrajectoryCritic <|-- RotateToGoalCritic
+' TrajectoryCritic <|-- TwirlingCritic
+
+@enduml
